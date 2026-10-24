@@ -1,0 +1,4 @@
+output "arn" {
+  description = "ARN of the SNS alert topic"
+  value       = aws_sns_topic.this.arn
+}

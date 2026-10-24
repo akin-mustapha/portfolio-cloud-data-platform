@@ -9,3 +9,13 @@ variable "aws_account_id" {
   type        = string
   default     = "861580917950"
 }
+
+variable "project_name" {
+  type    = string
+  default = "portfolio"
+}
+
+variable "environment" {
+  type    = string
+  default = "dev"
+}
