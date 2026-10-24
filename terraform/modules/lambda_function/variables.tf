@@ -29,3 +29,7 @@ variable "memory_size" {
   type    = number
   default = 128
 }
+
+variable "sns_alert_topic_arn" {
+  type = string
+}

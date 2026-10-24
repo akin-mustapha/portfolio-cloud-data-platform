@@ -18,3 +18,14 @@ resource "aws_lambda_function" "this" {
   timeout       = var.timeout
   memory_size   = var.memory_size
 }
+
+# Failure Destination Alerting for DCA Lambda
+resource "aws_lambda_function_event_invoke_config" "this" {
+  function_name = aws_lambda_function.this.function_name
+
+  destination_config {
+    on_failure {
+      destination = var.sns_alert_topic_arn
+    }
+  }
+}
