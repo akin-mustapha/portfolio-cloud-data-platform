@@ -18,6 +18,10 @@
 - Create new resources while keeping old
 - When new resources are fully function, remove old resources.
 
+#### Naming Convention
+
+- `profolio-dev-<resource-name>`
+
 commands
 
 ```sh
@@ -37,4 +41,8 @@ terraform show -json tfplan |
     | select(.change.actions | index("delete"))
     | "\(.address): \(.change.actions | join(", "))"
   '
+```
+
+```sh
+terraform init -reconfigure
 ```

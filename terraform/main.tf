@@ -4,7 +4,7 @@ provider "aws" {
 
 // Storage
 
-module "data-lake" {
+module "data_lake" {
   source      = "./modules/s3"
   bucket_name = "${var.project_name}-${var.environment}-data-lake"
 }
@@ -13,15 +13,15 @@ module "data-lake" {
 
 module "t212_secret" {
   source      = "./modules/secret_manager"
-  secret_name = "prod/financial-dataflow/trading212"
+  secret_name = "${var.environment}/${var.project_name}/trading-212"
 
 }
 
 // Schedule
 
-module "europe_open" {
+module "schedule_europe_open" {
   source     = "./modules/event_bridge_schedule"
-  name       = "financial-dataflow-europe-open"
+  name       = "${var.project_name}-${var.environment}-schedule-europe-open"
   group_name = "default"
 
   flexible_time_window = "OFF"
@@ -30,14 +30,14 @@ module "europe_open" {
   schedule_expression_timezone = "Europe/Dublin"
 
   // Need to update to step function
-  target_arn      = module.ingestion_lambda.arn
-  target_role_arn = module.role__financial_dataflow.arn
+  target_arn      = module.lambda_ingestion.arn
+  target_role_arn = module.iam_role_schedule.arn
   target_input    = "europe-open" 
 }
 
-module "midday" {
+module "schedule_midday" {
   source     = "./modules/event_bridge_schedule"
-  name       = "financial-dataflow-midday"
+  name       = "${var.project_name}-${var.environment}-schedule-midday"
   group_name = "default"
 
   flexible_time_window = "OFF"
@@ -46,14 +46,14 @@ module "midday" {
   schedule_expression_timezone = "Europe/Dublin"
 
   // Need to update to step function
-  target_arn      = module.ingestion_lambda.arn
-  target_role_arn = module.role__financial_dataflow.arn
+  target_arn      = module.lambda_ingestion.arn
+  target_role_arn = module.iam_role_schedule.arn
   target_input    = "midday" 
 }
 
-module "us_close" {
+module "schedule_us_close" {
   source     = "./modules/event_bridge_schedule"
-  name       = "financial-dataflow-us-close"
+  name       = "${var.project_name}-${var.environment}-schedule-us-close"
   group_name = "default"
 
   flexible_time_window = "OFF"
@@ -62,78 +62,78 @@ module "us_close" {
   schedule_expression_timezone = "Europe/Dublin"
   
   // Need to update to step function
-  target_arn      = module.ingestion_lambda.arn
-  target_role_arn = module.role__financial_dataflow.arn
+  target_arn      = module.lambda_ingestion.arn
+  target_role_arn = module.iam_role_schedule.arn
   target_input    = "us-close" 
 }
 
 // Compute resources
 
-module "ingestion_lambda" {
+module "lambda_ingestion" {
   source = "./modules/lambda_function"
 
-  function_name = "portfolio-ingestion"
+  function_name = "${var.project_name}-${var.environment}-ingestion"
   source_file = "${path.root}/../src/pipeline/t212-data-ingestion.py"
-  lambda_role_arn = module.role__lambda_pipeline.arn
+  lambda_role_arn = module.iam_role_lambda.arn
   handler       = "t212-data-ingestion.lambda_handler"
   runtime       = "python3.12"
   timeout       = 300
   memory_size   = 512
-  sns_alert_topic_arn = module.pipeline_alerts.arn
+  sns_alert_topic_arn = module.alerts.arn
 
 }
 
-module "transformation_lambda" {
+module "lambda_transformation" {
   source = "./modules/lambda_function"
 
-  function_name = "portfolio-transformation"
+  function_name = "${var.project_name}-${var.environment}-transformation"
   source_file = "${path.root}/../src/pipeline/t212-data-transformation.py"
-  lambda_role_arn = module.role__lambda_pipeline.arn
+  lambda_role_arn = module.iam_role_lambda.arn
   handler       = "t212-data-transformation.lambda_handler"
   runtime       = "python3.12"
   timeout       = 300
   memory_size   = 512
-  sns_alert_topic_arn = module.pipeline_alerts.arn
+  sns_alert_topic_arn = module.alerts.arn
 
 }
 
-module "processing_lambda" {
+module "lambda_processing" {
   source = "./modules/lambda_function"
 
-  function_name       = "portfolio-processing"
+  function_name       = "${var.project_name}-${var.environment}-processing"
   source_file         = "${path.root}/../src/pipeline/t212-data-processing.py"
-  lambda_role_arn     = module.role__lambda_pipeline.arn
+  lambda_role_arn     = module.iam_role_lambda.arn
   handler             = "t212-data-processing.lambda_handler"
   runtime             = "python3.12"
   timeout             = 300
   memory_size         = 512
-  sns_alert_topic_arn = module.pipeline_alerts.arn
+  sns_alert_topic_arn = module.alerts.arn
 
 }
 
-module "dca_lambda" {
+module "lambda_dca" {
   source = "./modules/lambda_function"
 
-  function_name       = "portfolio-processing"
+  function_name       = "${var.project_name}-${var.environment}-dca"
   source_file         = "${path.root}/../src/application/t212-dca.py"
-  lambda_role_arn     = module.role__lambda_pipeline.arn
+  lambda_role_arn     = module.iam_role_lambda.arn
   handler             = "t212-data-processing.lambda_handler"
   runtime             = "python3.12"
   timeout             = 300
   memory_size         = 512
-  sns_alert_topic_arn = module.pipeline_alerts.arn
+  sns_alert_topic_arn = module.alerts.arn
 }
 
 // Database
 
 module "trade_log" {
   source       = "./modules/dynamodb"
-  table_name   = "trade_log"
+  table_name   = "${var.project_name}-${var.environment}-trade-log"
   billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "trade_id"
+  hash_key     = "id"
   attributes   = [
     {
-      name = "trade_id"
+      name = "id"
       type = "S"
     }
   ]
@@ -142,16 +142,16 @@ module "trade_log" {
 // Monitoring
 
 // sns
-module "pipeline_alerts" {
+module "alerts" {
   source           = "./modules/sns"
-  sns_topic_name   = "financial-dataflow-alerts"
+  sns_topic_name   = "${var.project_name}-${var.environment}-alerts"
   sns_alerts_email = "akinkunmimustapha1@gmail.com"
 }
 
 // cloud watch alarm
 module "ingestion-errors" {
   source              = "./modules/cloud_watch_alarm"
-  alarm_name          = "financial-dataflow-ingestion-errors"
+  alarm_name          = "${var.project_name}-${var.environment}-ingestion-errors"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 1
   metric_name         = "Errors"
@@ -159,23 +159,23 @@ module "ingestion-errors" {
   period              = 300
   statistic           = "Sum"
   threshold           = 0
-  alarm_description   = "Fires when financial-dataflow-ingestion has any invocation errors"
+  alarm_description   = "Fires when ingestion has any invocation errors"
   treat_missing_data  = "notBreaching"
 
   dimensions = {
-    FunctionName = module.ingestion_lambda.function_name
+    FunctionName = module.lambda_ingestion.function_name
   }
 
-  alarm_actions = [module.pipeline_alerts.arn]
+  alarm_actions = [module.alerts.arn]
 }
 
 // IAM Role
 
-module "role__financial_dataflow" {
-  source = "./modules/iam_role"
-  aws_account_id = var.aws_account_id
-  iam_role_name   = "financial-dataflow-role"
-  iam_policy_name = "financial-dataflow-policy"
+module "iam_role_schedule" {
+  source          = "./modules/iam_role"
+  aws_account_id  = var.aws_account_id
+  iam_role_name   = "${var.project_name}-${var.environment}-schedule-role"
+  iam_policy_name = "${var.project_name}-${var.environment}-schedule-policy"
 
   assume_role_statements = [
     {
@@ -189,30 +189,25 @@ module "role__financial_dataflow" {
 
   iam_policy_statements = [
     {
-      "sid" =  "S3"
+      "sid" =  "StateFunctions"
       "effect" =  "Allow"
       "action" =  [
-          "s3:GetObject",
-          "s3:PutObject",
-          "s3:DeleteObject",
-          "s3:ListBucket"
+          "states:StartExecution"
         ]
       "resource" :  [
-          module.data-lake.arn,
-          "${module.data-lake.arn}/*",
-          "arn:aws:s3:::aws-glue-assets-${var.aws_account_id}-${var.aws_region}",
-          "arn:aws:s3:::aws-glue-assets-${var.aws_account_id}-${var.aws_region}/*"
+          // todo - add state function arn
+          "*"
         ]
 
     }
   ]
 }
 
-module "role__lambda_pipeline" {
+module "iam_role_lambda" {
   source = "./modules/iam_role"
   aws_account_id = var.aws_account_id
-  iam_role_name   = "financial-dataflow-lambda-role"
-  iam_policy_name = "financial-dataflow-lambda-policy"
+  iam_role_name   = "${var.project_name}-${var.environment}-lambda-role"
+  iam_policy_name = "${var.project_name}-${var.environment}-lambda-policy"
 
   assume_role_statements = [
     {
@@ -259,7 +254,7 @@ module "role__lambda_pipeline" {
           "s3:GetBucketLocation"
         ]
       "resource" : [
-          module.data-lake.arn
+          module.data_lake.arn
         ]
 
     },
@@ -272,7 +267,7 @@ module "role__lambda_pipeline" {
           "s3:DeleteObject"
         ]
       "resource" : [
-          "${module.data-lake.arn}/*"
+          "${module.data_lake.arn}/*"
         ]
 
     },
@@ -296,7 +291,7 @@ module "role__lambda_pipeline" {
       "sid" = "PublishFailureAlerts"
       "effect" = "Allow"
       "action" = ["sns:Publish"]
-      "resource" : [module.pipeline_alerts.arn]
+      "resource" : [module.alerts.arn]
     },
       {
         "sid"      = "DynamoDb"

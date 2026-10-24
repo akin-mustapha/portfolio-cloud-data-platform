@@ -1,6 +1,6 @@
-terraform {
 
-  required_version = ">= 1.15"
+terraform {
+  required_version = ">= 1.15, < 2.0"
 
   required_providers {
     aws = {
@@ -15,8 +15,8 @@ terraform {
   }
 
   backend "s3" {
-    bucket       = "terraform-state-8615" # terrform-state-{last 4 digits of account id}
-    key          = "financials-dataflow/terraform.tfstate"
+    bucket       = "terraform-state-8615"
+    key          = "portfolio-dev/terraform.tfstate"
     region       = "eu-west-1"
     encrypt      = true
     use_lockfile = true
