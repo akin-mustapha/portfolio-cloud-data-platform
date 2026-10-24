@@ -18,8 +18,8 @@ resource "aws_sns_topic_policy" "this" {
 
     Statement = [
       {
-        Sid       = "AllowCloudWatchAlarms"
-        Effect    = "Allow"
+        Sid    = "AllowCloudWatchAlarms"
+        Effect = "Allow"
         Principal = {
           Service = "cloudwatch.amazonaws.com"
         }
