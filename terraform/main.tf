@@ -591,3 +591,42 @@ module "iam_role_lambda_dca" {
     }
   ]
 }
+
+module "iam_role_step_function" {
+  source          = "./modules/iam_role"
+  aws_account_id  = var.aws_account_id
+  iam_role_name   = "${var.project_name}-${var.environment}-step-function-role"
+  iam_policy_name = "${var.project_name}-${var.environment}-step-function-policy"
+
+
+  assume_role_statements = [{
+    sid      = "AllowStepFunctionsAssumeRole"
+    effect   = "Allow"
+    services = ["states.amazonaws.com"]
+    action   = ["sts:AssumeRole"]
+  }]
+
+  iam_policy_statements = [{
+    sid    = "InvokePipelineLambdas"
+    effect = "Allow"
+    action = ["lambda:InvokeFunction"]
+    resource = [
+      module.lambda_ingestion.arn,
+      module.lambda_transformation.arn,
+      module.lambda_processing.arn
+    ]
+  }]
+}
+
+// Step Function
+
+module "step_function" {
+  source = "./modules/step_function"
+
+  name     = "${var.project_name}-${var.environment}-pipeline"
+  role_arn = module.iam_role_step_function.arn
+
+  asl = file(
+    "${path.root}/../portfolio_data_platform/step_functions/portfolio_pipeline.asl.json"
+  )
+}
