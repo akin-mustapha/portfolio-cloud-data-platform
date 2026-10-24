@@ -2,34 +2,35 @@ resource "aws_sns_topic" "this" {
   name = var.sns_topic_name
 }
 
-resource "aws_sns_topic_subscription" "pipeline_alerts_email" {
-  topic_arn = aws_sns_topic.pipeline_alerts.arn
+resource "aws_sns_topic_subscription" "email" {
+  topic_arn = aws_sns_topic.this.arn
   protocol  = "email"
   endpoint  = var.sns_alerts_email
 }
 
-resource "aws_sns_topic_policy" "pipeline_alerts" {
-  arn = aws_sns_topic.pipeline_alerts.arn
+data "aws_caller_identity" "current" {}
+
+resource "aws_sns_topic_policy" "this" {
+  arn = aws_sns_topic.this.arn
 
   policy = jsonencode({
     Version = "2012-10-17"
+
     Statement = [
       {
-        Sid       = "AllowLambdaDestination"
+        Sid       = "AllowCloudWatchAlarms"
         Effect    = "Allow"
-        Principal = { Service = "lambda.amazonaws.com" }
-        Action    = "SNS:Publish"
-        Resource  = aws_sns_topic.pipeline_alerts.arn
-        Condition = {
-          ArnLike = { "aws:SourceArn" = aws_lambda_function.pipeline["ingestion"].arn }
+        Principal = {
+          Service = "cloudwatch.amazonaws.com"
         }
-      },
-      {
-        Sid       = "AllowCloudWatchAlarm"
-        Effect    = "Allow"
-        Principal = { Service = "cloudwatch.amazonaws.com" }
-        Action    = "SNS:Publish"
-        Resource  = aws_sns_topic.pipeline_alerts.arn
+        Action   = "SNS:Publish"
+        Resource = aws_sns_topic.this.arn
+
+        Condition = {
+          StringEquals = {
+            "aws:SourceAccount" = data.aws_caller_identity.current.account_id
+          }
+        }
       }
     ]
   })
