@@ -87,6 +87,7 @@ module "lambda_ingestion" {
     S3_BUCKET   = module.data_lake.bucket_name
     SECRET_NAME = module.t212_secret.secret_name
     LOG_LEVEL   = "INFO"
+    T212_API_URL = "https://live.trading212.com/api/v0"
 
   }
 }
