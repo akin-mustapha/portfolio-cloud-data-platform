@@ -17,6 +17,11 @@ resource "aws_lambda_function" "this" {
 
   timeout     = var.timeout
   memory_size = var.memory_size
+
+
+  environment {
+    variables = var.environment_variables
+  }
 }
 
 # Failure Destination Alerting for DCA Lambda

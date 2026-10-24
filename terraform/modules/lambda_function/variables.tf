@@ -47,3 +47,9 @@ variable "sns_alert_topic_arn" {
   type        = string
   default     = null
 }
+
+variable "environment_variables" {
+  description = "Environment variables passed to the Lambda function."
+  type        = map(string)
+  default     = {}
+}
