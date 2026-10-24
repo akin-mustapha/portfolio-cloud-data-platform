@@ -21,6 +21,8 @@ resource "aws_lambda_function" "this" {
 
 # Failure Destination Alerting for DCA Lambda
 resource "aws_lambda_function_event_invoke_config" "this" {
+  count = var.sns_alert_topic_arn == null ? 0 : 1
+
   function_name = aws_lambda_function.this.function_name
 
   destination_config {
@@ -28,4 +30,11 @@ resource "aws_lambda_function_event_invoke_config" "this" {
       destination = var.sns_alert_topic_arn
     }
   }
+}
+
+resource "aws_cloudwatch_log_group" "this" {
+  name              = "/aws/lambda/${var.function_name}"
+  retention_in_days = 30
+
+  tags = var.tags
 }

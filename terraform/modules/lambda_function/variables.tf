@@ -30,6 +30,14 @@ variable "memory_size" {
   default = 128
 }
 
+variable "tags" {
+  description = "Tags applied to Lambda resources"
+  type        = map(string)
+  default     = {}
+}
+
 variable "sns_alert_topic_arn" {
-  type = string
+  description = "Optional SNS topic ARN for asynchronous Lambda failure notifications."
+  type        = string
+  default     = null
 }
