@@ -115,14 +115,15 @@ module "lambda_processing" {
 module "lambda_dca" {
   source = "./modules/lambda_function"
 
-  function_name       = "${var.project_name}-${var.environment}-dca"
-  source_file         = "${path.root}/../portfolio_data_platform/src/t212_automation/dca.py"
-  lambda_role_arn     = module.iam_role_lambda_dca.arn
-  handler             = "dca.lambda_handler"
-  runtime             = "python3.12"
-  timeout             = 300
-  memory_size         = 512
-  sns_alert_topic_arn = module.alerts.arn
+  function_name         = "${var.project_name}-${var.environment}-dca"
+  source_file           = "${path.root}/../portfolio_data_platform/src/t212_automation/dca.py"
+  lambda_role_arn       = module.iam_role_lambda_dca.arn
+  handler               = "dca.lambda_handler"
+  runtime               = "python3.12"
+  timeout               = 300
+  memory_size           = 512
+  enable_failure_alerts = true
+  sns_alert_topic_arn   = module.alerts.arn
 }
 
 // Database
