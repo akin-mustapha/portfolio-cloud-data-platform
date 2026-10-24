@@ -31,7 +31,7 @@ module "schedule_europe_open" {
   schedule_expression_timezone = "Europe/Dublin"
 
   // Need to update to step function
-  target_arn      = module.lambda_ingestion.arn
+  target_arn      = module.orchesration.arn
   target_role_arn = module.iam_role_schedule.arn
   target_input    = "europe-open"
 }
@@ -47,7 +47,7 @@ module "schedule_midday" {
   schedule_expression_timezone = "Europe/Dublin"
 
   // Need to update to step function
-  target_arn      = module.lambda_ingestion.arn
+  target_arn      = module.orchesration.arn
   target_role_arn = module.iam_role_schedule.arn
   target_input    = "midday"
 }
@@ -63,7 +63,7 @@ module "schedule_us_close" {
   schedule_expression_timezone = "Europe/Dublin"
 
   // Need to update to step function
-  target_arn      = module.lambda_ingestion.arn
+  target_arn      = module.orchesration.arn
   target_role_arn = module.iam_role_schedule.arn
   target_input    = "us-close"
 }
@@ -197,16 +197,9 @@ module "iam_role_schedule" {
         "states:StartExecution"
       ]
       "resource" : [
-        // todo - add state function arn
-        "*"
+        module.orchesration.arn
       ]
 
-    },
-    {
-      sid      = "InvokeIngestionLambda"
-      effect   = "Allow"
-      action   = ["lambda:InvokeFunction"]
-      resource = [module.lambda_ingestion.arn]
     }
   ]
 }
@@ -620,13 +613,13 @@ module "iam_role_step_function" {
 
 // Step Function
 
-module "step_function" {
+module "orchesration" {
   source = "./modules/step_function"
 
   name     = "${var.project_name}-${var.environment}-pipeline"
   role_arn = module.iam_role_step_function.arn
 
   asl = file(
-    "${path.root}/../portfolio_data_platform/step_functions/portfolio_pipeline.asl.json"
+    "${path.root}/../portfolio_data_platform/src/step_functions/portolio-dev-orchestration.asl.json"
   )
 }
