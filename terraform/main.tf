@@ -4,9 +4,9 @@ provider "aws" {
 
 // Storage
 
-module "storage__financial_dataflow" {
+module "data-lake" {
   source      = "./modules/s3"
-  bucket_name = "financial-dataflow"
+  bucket_name = "${var.project_name}-${var.environment}-data-lake"
 }
 
 // Secret Manager
@@ -198,8 +198,8 @@ module "role__financial_dataflow" {
           "s3:ListBucket"
         ]
       "resource" :  [
-          module.storage__financial_dataflow.arn,
-          "${module.storage__financial_dataflow.arn}/*",
+          module.data-lake.arn,
+          "${module.data-lake.arn}/*",
           "arn:aws:s3:::aws-glue-assets-${var.aws_account_id}-${var.aws_region}",
           "arn:aws:s3:::aws-glue-assets-${var.aws_account_id}-${var.aws_region}/*"
         ]
@@ -259,7 +259,7 @@ module "role__lambda_pipeline" {
           "s3:GetBucketLocation"
         ]
       "resource" : [
-          module.storage__financial_dataflow.arn
+          module.data-lake.arn
         ]
 
     },
@@ -272,7 +272,7 @@ module "role__lambda_pipeline" {
           "s3:DeleteObject"
         ]
       "resource" : [
-          "${module.storage__financial_dataflow.arn}/*"
+          "${module.data-lake.arn}/*"
         ]
 
     },
