@@ -8,7 +8,7 @@ resource "aws_dynamodb_table" "this" {
 
     content {
       name = attribute.value.name
-      type = attribute.value.typ
+      type = attribute.value.type
     }
   }
 }
