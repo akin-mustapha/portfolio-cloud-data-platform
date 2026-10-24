@@ -33,7 +33,7 @@ module "schedule_europe_open" {
   // Need to update to step function
   target_arn      = module.lambda_ingestion.arn
   target_role_arn = module.iam_role_schedule.arn
-  target_input    = "europe-open" 
+  target_input    = "europe-open"
 }
 
 module "schedule_midday" {
@@ -49,7 +49,7 @@ module "schedule_midday" {
   // Need to update to step function
   target_arn      = module.lambda_ingestion.arn
   target_role_arn = module.iam_role_schedule.arn
-  target_input    = "midday" 
+  target_input    = "midday"
 }
 
 module "schedule_us_close" {
@@ -61,11 +61,11 @@ module "schedule_us_close" {
 
   schedule_expression          = "cron(30 16 * * ? *)"
   schedule_expression_timezone = "Europe/Dublin"
-  
+
   // Need to update to step function
   target_arn      = module.lambda_ingestion.arn
   target_role_arn = module.iam_role_schedule.arn
-  target_input    = "us-close" 
+  target_input    = "us-close"
 }
 
 // Compute resources
@@ -73,13 +73,13 @@ module "schedule_us_close" {
 module "lambda_ingestion" {
   source = "./modules/lambda_function"
 
-  function_name = "${var.project_name}-${var.environment}-ingestion"
-  source_file = "${path.root}/../portfolio_data_platform/src/t212_pipeline/data_ingestion.py"
-  lambda_role_arn = module.iam_role_lambda_ingestion.arn
-  handler       = "data_ingestion.lambda_handler"
-  runtime       = "python3.12"
-  timeout       = 300
-  memory_size   = 512
+  function_name       = "${var.project_name}-${var.environment}-ingestion"
+  source_file         = "${path.root}/../portfolio_data_platform/src/t212_pipeline/data_ingestion.py"
+  lambda_role_arn     = module.iam_role_lambda_ingestion.arn
+  handler             = "data_ingestion.lambda_handler"
+  runtime             = "python3.12"
+  timeout             = 300
+  memory_size         = 512
   sns_alert_topic_arn = null
 
 }
@@ -87,13 +87,13 @@ module "lambda_ingestion" {
 module "lambda_transformation" {
   source = "./modules/lambda_function"
 
-  function_name = "${var.project_name}-${var.environment}-transformation"
-  source_file = "${path.root}/../portfolio_data_platform/src/t212_pipeline/data_transformation.py"
-  lambda_role_arn = module.iam_role_lambda_transformation.arn
-  handler       = "data_transformation.lambda_handler"
-  runtime       = "python3.12"
-  timeout       = 300
-  memory_size   = 512
+  function_name       = "${var.project_name}-${var.environment}-transformation"
+  source_file         = "${path.root}/../portfolio_data_platform/src/t212_pipeline/data_transformation.py"
+  lambda_role_arn     = module.iam_role_lambda_transformation.arn
+  handler             = "data_transformation.lambda_handler"
+  runtime             = "python3.12"
+  timeout             = 300
+  memory_size         = 512
   sns_alert_topic_arn = null
 
 }
@@ -132,7 +132,7 @@ module "trade_log" {
   table_name   = "${var.project_name}-${var.environment}-trade-log"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "id"
-  attributes   = [
+  attributes = [
     {
       name = "id"
       type = "S"
@@ -180,25 +180,25 @@ module "iam_role_schedule" {
 
   assume_role_statements = [
     {
-      sid = "AllowSchedulerAssumeRole"
-      effect= "Allow"
-      services = ["scheduler.amazonaws.com"]
-      action = ["sts:AssumeRole"]
+      sid            = "AllowSchedulerAssumeRole"
+      effect         = "Allow"
+      services       = ["scheduler.amazonaws.com"]
+      action         = ["sts:AssumeRole"]
       source_account = var.aws_account_id
     }
   ]
 
   iam_policy_statements = [
     {
-      "sid" =  "StateFunctions"
-      "effect" =  "Allow"
-      "action" =  [
-          "states:StartExecution"
-        ]
-      "resource" :  [
-          // todo - add state function arn
-          "*"
-        ]
+      "sid"    = "StateFunctions"
+      "effect" = "Allow"
+      "action" = [
+        "states:StartExecution"
+      ]
+      "resource" : [
+        // todo - add state function arn
+        "*"
+      ]
 
     },
     {
@@ -211,21 +211,21 @@ module "iam_role_schedule" {
 }
 
 module "iam_role_lambda_ingestion" {
-  source = "./modules/iam_role"
-  aws_account_id = var.aws_account_id
+  source          = "./modules/iam_role"
+  aws_account_id  = var.aws_account_id
   iam_role_name   = "${var.project_name}-${var.environment}-lambda-ingestion-role"
   iam_policy_name = "${var.project_name}-${var.environment}-lambda-ingestion-policy"
 
   assume_role_statements = [
     {
-      sid = "AllowLambdaAssumeRole"
-      effect= "Allow"
-      services = ["lambda.amazonaws.com"]
-      action = ["sts:AssumeRole"]
+      sid            = "AllowLambdaAssumeRole"
+      effect         = "Allow"
+      services       = ["lambda.amazonaws.com"]
+      action         = ["sts:AssumeRole"]
       source_account = var.aws_account_id
     }
   ]
-  
+
   iam_policy_statements = [
     {
       sid    = "WriteLambdaLogs"
@@ -239,42 +239,42 @@ module "iam_role_lambda_ingestion" {
       ]
     },
     {
-      "sid" = "Secrets"
+      "sid"    = "Secrets"
       "effect" = "Allow"
       "action" = [
-          "secretsmanager:GetSecretValue"
-        ]
+        "secretsmanager:GetSecretValue"
+      ]
       "resource" : [
-          module.t212_secret.arn,
-        ]
+        module.t212_secret.arn,
+      ]
 
     },
     {
-      "sid" = "S3Bucket"
+      "sid"    = "S3Bucket"
       "effect" = "Allow"
       "action" = [
-          "s3:ListBucket",
-          "s3:GetBucketLocation"
-        ]
+        "s3:ListBucket",
+        "s3:GetBucketLocation"
+      ]
       "resource" : [
-          module.data_lake.arn
-        ]
+        module.data_lake.arn
+      ]
 
     },
     {
-      "sid" = "S3Objects"
+      "sid"    = "S3Objects"
       "effect" = "Allow"
       "action" = [
-          "s3:GetObject",
-          "s3:PutObject",
-        ]
+        "s3:GetObject",
+        "s3:PutObject",
+      ]
       "resource" : [
-          "${module.data_lake.arn}/*"
-        ]
+        "${module.data_lake.arn}/*"
+      ]
 
     },
     {
-      "sid" = "PublishFailureAlerts"
+      "sid"    = "PublishFailureAlerts"
       "effect" = "Allow"
       "action" = ["sns:Publish"]
       "resource" : [module.alerts.arn]
@@ -283,21 +283,21 @@ module "iam_role_lambda_ingestion" {
 }
 
 module "iam_role_lambda_transformation" {
-  source = "./modules/iam_role"
-  aws_account_id = var.aws_account_id
+  source          = "./modules/iam_role"
+  aws_account_id  = var.aws_account_id
   iam_role_name   = "${var.project_name}-${var.environment}-lambda-transformation-role"
   iam_policy_name = "${var.project_name}-${var.environment}-lambda-transformation-policy"
 
   assume_role_statements = [
     {
-      sid = "AllowLambdaAssumeRole"
-      effect= "Allow"
-      services = ["lambda.amazonaws.com"]
-      action = ["sts:AssumeRole"]
+      sid            = "AllowLambdaAssumeRole"
+      effect         = "Allow"
+      services       = ["lambda.amazonaws.com"]
+      action         = ["sts:AssumeRole"]
       source_account = var.aws_account_id
     }
   ]
-  
+
   iam_policy_statements = [
     {
       sid    = "WriteLambdaLogs"
@@ -324,47 +324,47 @@ module "iam_role_lambda_transformation" {
 
     # },
     {
-      "sid" = "S3Bucket"
+      "sid"    = "S3Bucket"
       "effect" = "Allow"
       "action" = [
-          "s3:ListBucket",
-          "s3:GetBucketLocation"
-        ]
+        "s3:ListBucket",
+        "s3:GetBucketLocation"
+      ]
       "resource" : [
-          module.data_lake.arn
-        ]
+        module.data_lake.arn
+      ]
 
     },
     {
-      "sid" = "S3Objects"
+      "sid"    = "S3Objects"
       "effect" = "Allow"
       "action" = [
-          "s3:GetObject",
-          "s3:PutObject",
-        ]
+        "s3:GetObject",
+        "s3:PutObject",
+      ]
       "resource" : [
-          "${module.data_lake.arn}/*"
-        ]
+        "${module.data_lake.arn}/*"
+      ]
 
     },
     {
-      "sid" = "Athena"
+      "sid"    = "Athena"
       "effect" = "Allow"
       "action" = [
-          "athena:GetWorkGroup",
-          "athena:StartQueryExecution",
-          "athena:GetQueryExecution",
-          "athena:GetQueryResults",
-          "athena:StopQueryExecution",
-          "athena:GetDataCatalog"
-        ]
+        "athena:GetWorkGroup",
+        "athena:StartQueryExecution",
+        "athena:GetQueryExecution",
+        "athena:GetQueryResults",
+        "athena:StopQueryExecution",
+        "athena:GetDataCatalog"
+      ]
       "resource" : [
-          "arn:aws:athena:${var.aws_region}:${var.aws_account_id}:workgroup/*",
-          "arn:aws:athena:${var.aws_region}:${var.aws_account_id}:datacatalog/*"
-        ]
+        "arn:aws:athena:${var.aws_region}:${var.aws_account_id}:workgroup/*",
+        "arn:aws:athena:${var.aws_region}:${var.aws_account_id}:datacatalog/*"
+      ]
     },
     {
-      "sid" = "PublishFailureAlerts"
+      "sid"    = "PublishFailureAlerts"
       "effect" = "Allow"
       "action" = ["sns:Publish"]
       "resource" : [module.alerts.arn]
@@ -373,21 +373,21 @@ module "iam_role_lambda_transformation" {
 }
 
 module "iam_role_lambda_processing" {
-  source = "./modules/iam_role"
-  aws_account_id = var.aws_account_id
+  source          = "./modules/iam_role"
+  aws_account_id  = var.aws_account_id
   iam_role_name   = "${var.project_name}-${var.environment}-lambda-processing-role"
   iam_policy_name = "${var.project_name}-${var.environment}-lambda-processing-policy"
 
   assume_role_statements = [
     {
-      sid = "AllowLambdaAssumeRole"
-      effect= "Allow"
-      services = ["lambda.amazonaws.com"]
-      action = ["sts:AssumeRole"]
+      sid            = "AllowLambdaAssumeRole"
+      effect         = "Allow"
+      services       = ["lambda.amazonaws.com"]
+      action         = ["sts:AssumeRole"]
       source_account = var.aws_account_id
     }
   ]
-  
+
   iam_policy_statements = [
     {
       sid    = "WriteLambdaLogs"
@@ -414,85 +414,85 @@ module "iam_role_lambda_processing" {
 
     # },
     {
-      "sid" = "S3Bucket"
+      "sid"    = "S3Bucket"
       "effect" = "Allow"
       "action" = [
-          "s3:ListBucket",
-          "s3:GetBucketLocation"
-        ]
+        "s3:ListBucket",
+        "s3:GetBucketLocation"
+      ]
       "resource" : [
-          module.data_lake.arn
-        ]
+        module.data_lake.arn
+      ]
 
     },
     {
-      "sid" = "S3Objects"
+      "sid"    = "S3Objects"
       "effect" = "Allow"
       "action" = [
-          "s3:GetObject",
-          "s3:PutObject",
-        ]
+        "s3:GetObject",
+        "s3:PutObject",
+      ]
       "resource" : [
-          "${module.data_lake.arn}/*"
-        ]
+        "${module.data_lake.arn}/*"
+      ]
 
     },
     {
-      "sid" = "Athena"
+      "sid"    = "Athena"
       "effect" = "Allow"
       "action" = [
-          "athena:GetWorkGroup",
-          "athena:StartQueryExecution",
-          "athena:GetQueryExecution",
-          "athena:GetQueryResults",
-          "athena:StopQueryExecution",
-          "athena:GetDataCatalog"
-        ]
+        "athena:GetWorkGroup",
+        "athena:StartQueryExecution",
+        "athena:GetQueryExecution",
+        "athena:GetQueryResults",
+        "athena:StopQueryExecution",
+        "athena:GetDataCatalog"
+      ]
       "resource" : [
-          "arn:aws:athena:${var.aws_region}:${var.aws_account_id}:workgroup/*",
-          "arn:aws:athena:${var.aws_region}:${var.aws_account_id}:datacatalog/*"
-        ]
+        "arn:aws:athena:${var.aws_region}:${var.aws_account_id}:workgroup/*",
+        "arn:aws:athena:${var.aws_region}:${var.aws_account_id}:datacatalog/*"
+      ]
     },
     {
-      "sid" = "PublishFailureAlerts"
+      "sid"    = "PublishFailureAlerts"
       "effect" = "Allow"
       "action" = ["sns:Publish"]
       "resource" : [module.alerts.arn]
     },
-      {
-        "sid"      = "DynamoDb"
-        "effect"   = "Allow"
-        "action"   = [
-          "dynamodb:GetItem",
-          "dynamodb:PutItem",
-          "dynamodb:BatchGetItem",
-          "dynamodb:BatchWriteItem",
-          "dynamodb:Query",
-          "dynamodb:Scan"
-        ]
-        "resource" = [
-          module.trade_log.arn  # Or "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/trade_log"
-        ]
-      }
+    {
+      "sid"    = "DynamoDb"
+      "effect" = "Allow"
+      "action" = [
+        "dynamodb:GetItem",
+        "dynamodb:PutItem",
+        "dynamodb:BatchGetItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:Query",
+        "dynamodb:Scan"
+      ]
+      "resource" = [
+        module.trade_log.arn # Or "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/trade_log"
+      ]
+    }
   ]
 }
 
 module "iam_role_lambda_dca" {
-  source = "./modules/iam_role"
-  aws_account_id = var.aws_account_id
+  source          = "./modules/iam_role"
+  aws_account_id  = var.aws_account_id
   iam_role_name   = "${var.project_name}-${var.environment}-lambda-dca-role"
   iam_policy_name = "${var.project_name}-${var.environment}-lambda-dca-policy"
 
   assume_role_statements = [
     {
-      sid = "AllowLambdaAssumeRole"
-      effect= "Allow"
-      services = ["lambda.amazonaws.com"]
-      action = ["sts:AssumeRole"]
+      sid            = "AllowLambdaAssumeRole"
+      effect         = "Allow"
+      services       = ["lambda.amazonaws.com"]
+      action         = ["sts:AssumeRole"]
       source_account = var.aws_account_id
     }
   ]
-  
+
   iam_policy_statements = [
     {
       sid    = "WriteLambdaLogs"
@@ -506,87 +506,87 @@ module "iam_role_lambda_dca" {
       ]
     },
     {
-      "sid" = "Secrets"
+      "sid"    = "Secrets"
       "effect" = "Allow"
       "action" = [
-          "secretsmanager:GetSecretValue"
-        ]
+        "secretsmanager:GetSecretValue"
+      ]
       "resource" : [
-          // todo - create module and replace
-          "arn:aws:secretsmanager:eu-west-1:861580917950:secret:prod/financial/t212-dca-automation-UqUvlT"
-        ]
+        // todo - create module and replace
+        "arn:aws:secretsmanager:eu-west-1:861580917950:secret:prod/financial/t212-dca-automation-UqUvlT"
+      ]
 
     },
     {
-      "sid" = "S3Bucket"
+      "sid"    = "S3Bucket"
       "effect" = "Allow"
       "action" = [
-          "s3:ListBucket",
-          "s3:GetBucketLocation"
-        ]
+        "s3:ListBucket",
+        "s3:GetBucketLocation"
+      ]
       "resource" : [
-          module.data_lake.arn
-        ]
+        module.data_lake.arn
+      ]
 
     },
     {
-      "sid" = "S3Objects"
+      "sid"    = "S3Objects"
       "effect" = "Allow"
       "action" = [
-          "s3:GetObject",
-          "s3:PutObject",
-          "s3:DeleteObject"
-        ]
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:DeleteObject"
+      ]
       "resource" : [
-          "${module.data_lake.arn}/*"
-        ]
+        "${module.data_lake.arn}/*"
+      ]
 
     },
     {
-      "sid" = "Athena"
+      "sid"    = "Athena"
       "effect" = "Allow"
       "action" = [
-          "athena:GetWorkGroup",
-          "athena:StartQueryExecution",
-          "athena:GetQueryExecution",
-          "athena:GetQueryResults",
-          "athena:StopQueryExecution",
-          "athena:GetDataCatalog"
-        ]
+        "athena:GetWorkGroup",
+        "athena:StartQueryExecution",
+        "athena:GetQueryExecution",
+        "athena:GetQueryResults",
+        "athena:StopQueryExecution",
+        "athena:GetDataCatalog"
+      ]
       "resource" : [
-          "arn:aws:athena:${var.aws_region}:${var.aws_account_id}:workgroup/*",
-          "arn:aws:athena:${var.aws_region}:${var.aws_account_id}:datacatalog/*"
-        ]
+        "arn:aws:athena:${var.aws_region}:${var.aws_account_id}:workgroup/*",
+        "arn:aws:athena:${var.aws_region}:${var.aws_account_id}:datacatalog/*"
+      ]
     },
     {
-      "sid" = "PublishFailureAlerts"
+      "sid"    = "PublishFailureAlerts"
       "effect" = "Allow"
       "action" = ["sns:Publish"]
       "resource" : [module.alerts.arn]
     },
-      {
-        "sid"      = "DynamoDb"
-        "effect"   = "Allow"
-        "action"   = [
-          "dynamodb:GetItem",
-          "dynamodb:PutItem",
-          "dynamodb:BatchGetItem",
-          "dynamodb:BatchWriteItem",
-          "dynamodb:Query",
-          "dynamodb:Scan"
-        ]
-        "resource" = [
-          module.trade_log.arn  # Or "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/trade_log"
-        ]
-      },
-      {
-        "sid"    = "SESAccess"
-        "effect" = "Allow"
-        "action" = [
-          "ses:SendEmail",
-          "ses:SendRawEmail"
-        ]
-        "resource" = ["*"]
-      }
+    {
+      "sid"    = "DynamoDb"
+      "effect" = "Allow"
+      "action" = [
+        "dynamodb:GetItem",
+        "dynamodb:PutItem",
+        "dynamodb:BatchGetItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:Query",
+        "dynamodb:Scan"
+      ]
+      "resource" = [
+        module.trade_log.arn # Or "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/trade_log"
+      ]
+    },
+    {
+      "sid"    = "SESAccess"
+      "effect" = "Allow"
+      "action" = [
+        "ses:SendEmail",
+        "ses:SendRawEmail"
+      ]
+      "resource" = ["*"]
+    }
   ]
 }
