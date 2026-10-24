@@ -21,7 +21,7 @@ resource "aws_lambda_function" "this" {
 
 # Failure Destination Alerting for DCA Lambda
 resource "aws_lambda_function_event_invoke_config" "this" {
-  count = var.sns_alert_topic_arn == null ? 0 : 1
+  count = var.enable_failure_alerts ? 1 : 0
 
   function_name = aws_lambda_function.this.function_name
 

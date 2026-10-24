@@ -36,8 +36,14 @@ variable "tags" {
   default     = {}
 }
 
+variable "enable_failure_alerts" {
+  description = "Whether to configure an asynchronous failure destination."
+  type        = bool
+  default     = false
+}
+
 variable "sns_alert_topic_arn" {
-  description = "Optional SNS topic ARN for asynchronous Lambda failure notifications."
+  description = "SNS topic ARN for asynchronous Lambda failure notifications."
   type        = string
   default     = null
 }
