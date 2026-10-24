@@ -3,7 +3,7 @@ variable "name" {
 }
 
 variable "group_name" {
-  type = string
+  type    = string
   default = "default"
 }
 
