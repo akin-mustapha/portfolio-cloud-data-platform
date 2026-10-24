@@ -7,6 +7,7 @@ provider "aws" {
 module "data_lake" {
   source      = "./modules/s3"
   bucket_name = "${var.project_name}-${var.environment}-data-lake"
+  tags        = local.common_tags
 }
 
 // Secret Manager
@@ -73,13 +74,13 @@ module "lambda_ingestion" {
   source = "./modules/lambda_function"
 
   function_name = "${var.project_name}-${var.environment}-ingestion"
-  source_file = "${path.root}/../src/pipeline/t212-data-ingestion.py"
-  lambda_role_arn = module.iam_role_lambda.arn
-  handler       = "t212-data-ingestion.lambda_handler"
+  source_file = "${path.root}/../portfolio_data_platform/src/t212_pipeline/data_ingestion.py"
+  lambda_role_arn = module.iam_role_lambda_ingestion.arn
+  handler       = "data_ingestion.lambda_handler"
   runtime       = "python3.12"
   timeout       = 300
   memory_size   = 512
-  sns_alert_topic_arn = module.alerts.arn
+  sns_alert_topic_arn = null
 
 }
 
@@ -87,13 +88,13 @@ module "lambda_transformation" {
   source = "./modules/lambda_function"
 
   function_name = "${var.project_name}-${var.environment}-transformation"
-  source_file = "${path.root}/../src/pipeline/t212-data-transformation.py"
-  lambda_role_arn = module.iam_role_lambda.arn
-  handler       = "t212-data-transformation.lambda_handler"
+  source_file = "${path.root}/../portfolio_data_platform/src/t212_pipeline/data_transformation.py"
+  lambda_role_arn = module.iam_role_lambda_transformation.arn
+  handler       = "data_transformation.lambda_handler"
   runtime       = "python3.12"
   timeout       = 300
   memory_size   = 512
-  sns_alert_topic_arn = module.alerts.arn
+  sns_alert_topic_arn = null
 
 }
 
@@ -101,13 +102,13 @@ module "lambda_processing" {
   source = "./modules/lambda_function"
 
   function_name       = "${var.project_name}-${var.environment}-processing"
-  source_file         = "${path.root}/../src/pipeline/t212-data-processing.py"
-  lambda_role_arn     = module.iam_role_lambda.arn
-  handler             = "t212-data-processing.lambda_handler"
+  source_file         = "${path.root}/../portfolio_data_platform/src/t212_pipeline/data_processing.py"
+  lambda_role_arn     = module.iam_role_lambda_processing.arn
+  handler             = "data_processing.lambda_handler"
   runtime             = "python3.12"
   timeout             = 300
   memory_size         = 512
-  sns_alert_topic_arn = module.alerts.arn
+  sns_alert_topic_arn = null
 
 }
 
@@ -115,9 +116,9 @@ module "lambda_dca" {
   source = "./modules/lambda_function"
 
   function_name       = "${var.project_name}-${var.environment}-dca"
-  source_file         = "${path.root}/../src/application/t212-dca.py"
-  lambda_role_arn     = module.iam_role_lambda.arn
-  handler             = "t212-data-processing.lambda_handler"
+  source_file         = "${path.root}/../portfolio_data_platform/src/t212_automation/dca.py"
+  lambda_role_arn     = module.iam_role_lambda_dca.arn
+  handler             = "dca.lambda_handler"
   runtime             = "python3.12"
   timeout             = 300
   memory_size         = 512
@@ -199,15 +200,21 @@ module "iam_role_schedule" {
           "*"
         ]
 
+    },
+    {
+      sid      = "InvokeIngestionLambda"
+      effect   = "Allow"
+      action   = ["lambda:InvokeFunction"]
+      resource = [module.lambda_ingestion.arn]
     }
   ]
 }
 
-module "iam_role_lambda" {
+module "iam_role_lambda_ingestion" {
   source = "./modules/iam_role"
   aws_account_id = var.aws_account_id
-  iam_role_name   = "${var.project_name}-${var.environment}-lambda-role"
-  iam_policy_name = "${var.project_name}-${var.environment}-lambda-policy"
+  iam_role_name   = "${var.project_name}-${var.environment}-lambda-ingestion-role"
+  iam_policy_name = "${var.project_name}-${var.environment}-lambda-ingestion-policy"
 
   assume_role_statements = [
     {
@@ -221,17 +228,15 @@ module "iam_role_lambda" {
   
   iam_policy_statements = [
     {
-      "sid" = "CloudWatchLogs"
-      "effect" = "Allow"
-      "action" = [
-          "logs:CreateLogGroup",
-          "logs:CreateLogStream",
-          "logs:PutLogEvents"
-        ]
-      "resource" : [
-          "arn:aws:logs:${var.aws_region}:${var.aws_account_id}:log-group:/aws/lambda/*"
-        ]
-
+      sid    = "WriteLambdaLogs"
+      effect = "Allow"
+      action = [
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ]
+      resource = [
+        "arn:aws:logs:${var.aws_region}:${var.aws_account_id}:log-group:/aws/lambda/*:log-stream:*"
+      ]
     },
     {
       "sid" = "Secrets"
@@ -241,6 +246,272 @@ module "iam_role_lambda" {
         ]
       "resource" : [
           module.t212_secret.arn,
+        ]
+
+    },
+    {
+      "sid" = "S3Bucket"
+      "effect" = "Allow"
+      "action" = [
+          "s3:ListBucket",
+          "s3:GetBucketLocation"
+        ]
+      "resource" : [
+          module.data_lake.arn
+        ]
+
+    },
+    {
+      "sid" = "S3Objects"
+      "effect" = "Allow"
+      "action" = [
+          "s3:GetObject",
+          "s3:PutObject",
+        ]
+      "resource" : [
+          "${module.data_lake.arn}/*"
+        ]
+
+    },
+    {
+      "sid" = "PublishFailureAlerts"
+      "effect" = "Allow"
+      "action" = ["sns:Publish"]
+      "resource" : [module.alerts.arn]
+    }
+  ]
+}
+
+module "iam_role_lambda_transformation" {
+  source = "./modules/iam_role"
+  aws_account_id = var.aws_account_id
+  iam_role_name   = "${var.project_name}-${var.environment}-lambda-transformation-role"
+  iam_policy_name = "${var.project_name}-${var.environment}-lambda-transformation-policy"
+
+  assume_role_statements = [
+    {
+      sid = "AllowLambdaAssumeRole"
+      effect= "Allow"
+      services = ["lambda.amazonaws.com"]
+      action = ["sts:AssumeRole"]
+      source_account = var.aws_account_id
+    }
+  ]
+  
+  iam_policy_statements = [
+    {
+      sid    = "WriteLambdaLogs"
+      effect = "Allow"
+      action = [
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ]
+      resource = [
+        "arn:aws:logs:${var.aws_region}:${var.aws_account_id}:log-group:/aws/lambda/*:log-stream:*"
+      ]
+    },
+    # {
+    #   "sid" = "Secrets"
+    #   "effect" = "Allow"
+    #   "action" = [
+    #       "secretsmanager:GetSecretValue"
+    #     ]
+    #   "resource" : [
+    #       module.t212_secret.arn,
+    #       // todo - create module and replace
+    #       "arn:aws:secretsmanager:eu-west-1:861580917950:secret:prod/financial/t212-dca-automation-UqUvlT"
+    #     ]
+
+    # },
+    {
+      "sid" = "S3Bucket"
+      "effect" = "Allow"
+      "action" = [
+          "s3:ListBucket",
+          "s3:GetBucketLocation"
+        ]
+      "resource" : [
+          module.data_lake.arn
+        ]
+
+    },
+    {
+      "sid" = "S3Objects"
+      "effect" = "Allow"
+      "action" = [
+          "s3:GetObject",
+          "s3:PutObject",
+        ]
+      "resource" : [
+          "${module.data_lake.arn}/*"
+        ]
+
+    },
+    {
+      "sid" = "Athena"
+      "effect" = "Allow"
+      "action" = [
+          "athena:GetWorkGroup",
+          "athena:StartQueryExecution",
+          "athena:GetQueryExecution",
+          "athena:GetQueryResults",
+          "athena:StopQueryExecution",
+          "athena:GetDataCatalog"
+        ]
+      "resource" : [
+          "arn:aws:athena:${var.aws_region}:${var.aws_account_id}:workgroup/*",
+          "arn:aws:athena:${var.aws_region}:${var.aws_account_id}:datacatalog/*"
+        ]
+    },
+    {
+      "sid" = "PublishFailureAlerts"
+      "effect" = "Allow"
+      "action" = ["sns:Publish"]
+      "resource" : [module.alerts.arn]
+    }
+  ]
+}
+
+module "iam_role_lambda_processing" {
+  source = "./modules/iam_role"
+  aws_account_id = var.aws_account_id
+  iam_role_name   = "${var.project_name}-${var.environment}-lambda-processing-role"
+  iam_policy_name = "${var.project_name}-${var.environment}-lambda-processing-policy"
+
+  assume_role_statements = [
+    {
+      sid = "AllowLambdaAssumeRole"
+      effect= "Allow"
+      services = ["lambda.amazonaws.com"]
+      action = ["sts:AssumeRole"]
+      source_account = var.aws_account_id
+    }
+  ]
+  
+  iam_policy_statements = [
+    {
+      sid    = "WriteLambdaLogs"
+      effect = "Allow"
+      action = [
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ]
+      resource = [
+        "arn:aws:logs:${var.aws_region}:${var.aws_account_id}:log-group:/aws/lambda/*:log-stream:*"
+      ]
+    },
+    # {
+    #   "sid" = "Secrets"
+    #   "effect" = "Allow"
+    #   "action" = [
+    #       "secretsmanager:GetSecretValue"
+    #     ]
+    #   "resource" : [
+    #       module.t212_secret.arn,
+    #       // todo - create module and replace
+    #       "arn:aws:secretsmanager:eu-west-1:861580917950:secret:prod/financial/t212-dca-automation-UqUvlT"
+    #     ]
+
+    # },
+    {
+      "sid" = "S3Bucket"
+      "effect" = "Allow"
+      "action" = [
+          "s3:ListBucket",
+          "s3:GetBucketLocation"
+        ]
+      "resource" : [
+          module.data_lake.arn
+        ]
+
+    },
+    {
+      "sid" = "S3Objects"
+      "effect" = "Allow"
+      "action" = [
+          "s3:GetObject",
+          "s3:PutObject",
+        ]
+      "resource" : [
+          "${module.data_lake.arn}/*"
+        ]
+
+    },
+    {
+      "sid" = "Athena"
+      "effect" = "Allow"
+      "action" = [
+          "athena:GetWorkGroup",
+          "athena:StartQueryExecution",
+          "athena:GetQueryExecution",
+          "athena:GetQueryResults",
+          "athena:StopQueryExecution",
+          "athena:GetDataCatalog"
+        ]
+      "resource" : [
+          "arn:aws:athena:${var.aws_region}:${var.aws_account_id}:workgroup/*",
+          "arn:aws:athena:${var.aws_region}:${var.aws_account_id}:datacatalog/*"
+        ]
+    },
+    {
+      "sid" = "PublishFailureAlerts"
+      "effect" = "Allow"
+      "action" = ["sns:Publish"]
+      "resource" : [module.alerts.arn]
+    },
+      {
+        "sid"      = "DynamoDb"
+        "effect"   = "Allow"
+        "action"   = [
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:BatchGetItem",
+          "dynamodb:BatchWriteItem",
+          "dynamodb:Query",
+          "dynamodb:Scan"
+        ]
+        "resource" = [
+          module.trade_log.arn  # Or "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/trade_log"
+        ]
+      }
+  ]
+}
+
+module "iam_role_lambda_dca" {
+  source = "./modules/iam_role"
+  aws_account_id = var.aws_account_id
+  iam_role_name   = "${var.project_name}-${var.environment}-lambda-dca-role"
+  iam_policy_name = "${var.project_name}-${var.environment}-lambda-dca-policy"
+
+  assume_role_statements = [
+    {
+      sid = "AllowLambdaAssumeRole"
+      effect= "Allow"
+      services = ["lambda.amazonaws.com"]
+      action = ["sts:AssumeRole"]
+      source_account = var.aws_account_id
+    }
+  ]
+  
+  iam_policy_statements = [
+    {
+      sid    = "WriteLambdaLogs"
+      effect = "Allow"
+      action = [
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ]
+      resource = [
+        "arn:aws:logs:${var.aws_region}:${var.aws_account_id}:log-group:/aws/lambda/*:log-stream:*"
+      ]
+    },
+    {
+      "sid" = "Secrets"
+      "effect" = "Allow"
+      "action" = [
+          "secretsmanager:GetSecretValue"
+        ]
+      "resource" : [
           // todo - create module and replace
           "arn:aws:secretsmanager:eu-west-1:861580917950:secret:prod/financial/t212-dca-automation-UqUvlT"
         ]
