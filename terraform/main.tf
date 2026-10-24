@@ -81,7 +81,14 @@ module "lambda_ingestion" {
   timeout             = 300
   memory_size         = 512
   sns_alert_topic_arn = null
+  environment_variables = {
+    ENVIRONMENT = var.environment
+    REGION_NAME = var.aws_region
+    S3_BUCKET   = module.data_lake.bucket_name
+    SECRET_NAME = module.t212_secret.secret_name
+    LOG_LEVEL   = "INFO"
 
+  }
 }
 
 module "lambda_transformation" {
