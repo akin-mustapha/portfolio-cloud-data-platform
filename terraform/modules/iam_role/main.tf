@@ -7,9 +7,9 @@ resource "aws_iam_role" "this" {
     Statement = [
       for statement in var.assume_role_statements : merge(
         {
-          Sid = statement.sid
+          Sid    = statement.sid
           Effect = statement.effect
-          
+
           Principal = {
             Service = statement.services
           }
@@ -36,9 +36,9 @@ resource "aws_iam_role_policy" "this" {
     Version = "2012-10-17"
     Statement = [
       for statement in var.iam_policy_statements : {
-        Sid = statement.sid
-        Effect = statement.effect
-        Action = statement.action
+        Sid      = statement.sid
+        Effect   = statement.effect
+        Action   = statement.action
         Resource = statement.resource
       }
     ]
