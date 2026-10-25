@@ -1,0 +1,71 @@
+[
+  {
+    "Name": "name",
+    "Type": "string"
+  },
+  {
+    "Name": "ticker",
+    "Type": "string"
+  },
+  {
+    "Name": "isin",
+    "Type": "string"
+  },
+  {
+    "Name": "created_at",
+    "Type": "timestamp"
+  },
+  {
+    "Name": "asset_currency",
+    "Type": "string"
+  },
+  {
+    "Name": "avg_price_paid",
+    "Type": "double"
+  },
+  {
+    "Name": "current_price",
+    "Type": "double"
+  },
+  {
+    "Name": "quantity",
+    "Type": "double"
+  },
+  {
+    "Name": "quantity_available_for_trading",
+    "Type": "double"
+  },
+  {
+    "Name": "quantity_in_pies",
+    "Type": "double"
+  },
+  {
+    "Name": "account_currency",
+    "Type": "string"
+  },
+  {
+    "Name": "current_value",
+    "Type": "double"
+  },
+  {
+    "Name": "fx_impact",
+    "Type": "double"
+  },
+  {
+    "Name": "total_cost",
+    "Type": "double"
+  },
+  {
+    "Name": "unrealized_profit_loss",
+    "Type": "double"
+  },
+  {
+    "Name": "ingested_timestamp",
+    "Type": "timestamp"
+  },
+  {
+    "Name": "ingested_date",
+    "Type": "date",
+    "PartitionKey": "Partition (0)"
+  }
+]

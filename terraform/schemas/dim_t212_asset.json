@@ -1,0 +1,30 @@
+[
+  {
+    "Name": "ticker",
+    "Type": "string"
+  },
+  {
+    "Name": "symbol",
+    "Type": "string"
+  },
+  {
+    "Name": "name",
+    "Type": "string"
+  },
+  {
+    "Name": "sector",
+    "Type": "string"
+  },
+  {
+    "Name": "industry",
+    "Type": "string"
+  },
+  {
+    "Name": "asset_type",
+    "Type": "string"
+  },
+  {
+    "Name": "is_etf",
+    "Type": "boolean"
+  }
+]
