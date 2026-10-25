@@ -710,24 +710,35 @@ module "orchesration" {
 }
 
 // tables
-module "fact_t212_positions_test" {
+# module "fact_t212_positions_test" {
+#   source = "./modules/glue_catalog_table"
+
+#   name          = "fact_t212_positions_test"
+#   database_name = module.portfolio_database.name
+#   location      = "s3://${module.data_lake.bucket_name}/data/trading-212/gold/fact_t212_positions/"
+
+#   columns = [
+#     { name = "ticker", type = "string" },
+#     { name = "quantity", type = "double" },
+#     { name = "current_price", type = "double" },
+#     { name = "current_value", type = "double" },
+#     { name = "pnl", type = "double" },
+#     { name = "date_id", type = "bigint" },
+#     { name = "ingested_timestamp", type = "timestamp" }
+#   ]
+
+#   partition_keys = [
+#     { name = "ingested_date", type = "date" }
+#   ]
+# }
+
+
+module "silver_positions_table" {
   source = "./modules/glue_catalog_table"
 
-  name          = "fact_t212_positions_test"
+  name          = "silver_t212_positions_test"
   database_name = module.portfolio_database.name
-  location      = "s3://${module.data_lake.bucket_name}/data/trading-212/gold/fact_t212_positions/"
+  location      = "s3://${module.data_lake.bucket_name}/data/trading-212/silver/positions/"
 
-  columns = [
-    { name = "ticker", type = "string" },
-    { name = "quantity", type = "double" },
-    { name = "current_price", type = "double" },
-    { name = "current_value", type = "double" },
-    { name = "pnl", type = "double" },
-    { name = "date_id", type = "bigint" },
-    { name = "ingested_timestamp", type = "timestamp" }
-  ]
-
-  partition_keys = [
-    { name = "ingested_date", type = "date" }
-  ]
+  schema = file("${path.root}/schemas/silver_t212_positions.json")
 }
