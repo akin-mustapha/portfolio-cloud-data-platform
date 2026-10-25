@@ -1,3 +1,22 @@
+locals {
+  schema = jsondecode(var.schema)
+
+  columns = [
+    for column in local.schema : {
+      name = column.Name
+      type = column.Type
+    }
+    if !contains(keys(column), "PartitionKey")
+  ]
+
+  partition_keys = [
+    for column in local.schema : {
+      name = column.Name
+      type = column.Type
+    }
+    if contains(keys(column), "PartitionKey")
+  ]
+}
 
 resource "aws_glue_catalog_table" "this" {
   name          = var.name
@@ -24,18 +43,17 @@ resource "aws_glue_catalog_table" "this" {
     }
 
     dynamic "columns" {
-      for_each = var.columns
+      for_each = local.columns
 
       content {
-        name    = columns.value.name
-        type    = columns.value.type
-        comment = try(columns.value.comment, null)
+        name = columns.value.name
+        type = columns.value.type
       }
     }
   }
 
   dynamic "partition_keys" {
-    for_each = var.partition_keys
+    for_each = local.partition_keys
 
     content {
       name = partition_keys.value.name
