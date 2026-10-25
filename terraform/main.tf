@@ -82,11 +82,11 @@ module "lambda_ingestion" {
   memory_size         = 512
   sns_alert_topic_arn = null
   environment_variables = {
-    ENVIRONMENT = var.environment
-    REGION_NAME = var.aws_region
-    S3_BUCKET   = module.data_lake.bucket_name
-    SECRET_NAME = module.t212_secret.secret_name
-    LOG_LEVEL   = "INFO"
+    ENVIRONMENT  = var.environment
+    REGION_NAME  = var.aws_region
+    S3_BUCKET    = module.data_lake.bucket_name
+    SECRET_NAME  = module.t212_secret.secret_name
+    LOG_LEVEL    = "INFO"
     T212_API_URL = "https://live.trading212.com/api/v0"
 
   }
@@ -95,13 +95,16 @@ module "lambda_ingestion" {
 module "lambda_transformation" {
   source = "./modules/lambda_function"
 
-  function_name       = "${var.project_name}-${var.environment}-transformation"
-  source_file         = "${path.root}/../portfolio_data_platform/src/t212_pipeline/data_transformation.py"
-  lambda_role_arn     = module.iam_role_lambda_transformation.arn
-  handler             = "data_transformation.lambda_handler"
-  runtime             = "python3.12"
-  timeout             = 300
-  memory_size         = 512
+  function_name   = "${var.project_name}-${var.environment}-transformation"
+  source_file     = "${path.root}/../portfolio_data_platform/src/t212_pipeline/data_transformation.py"
+  lambda_role_arn = module.iam_role_lambda_transformation.arn
+  handler         = "data_transformation.lambda_handler"
+  runtime         = "python3.12"
+  timeout         = 300
+  memory_size     = 512
+  layers = [
+    "arn:aws:lambda:${var.aws_region}:336392948345:layer:AWSSDKPandas-Python312:13"
+  ]
   sns_alert_topic_arn = null
 
 }
@@ -109,13 +112,16 @@ module "lambda_transformation" {
 module "lambda_processing" {
   source = "./modules/lambda_function"
 
-  function_name       = "${var.project_name}-${var.environment}-processing"
-  source_file         = "${path.root}/../portfolio_data_platform/src/t212_pipeline/data_processing.py"
-  lambda_role_arn     = module.iam_role_lambda_processing.arn
-  handler             = "data_processing.lambda_handler"
-  runtime             = "python3.12"
-  timeout             = 300
-  memory_size         = 512
+  function_name   = "${var.project_name}-${var.environment}-processing"
+  source_file     = "${path.root}/../portfolio_data_platform/src/t212_pipeline/data_processing.py"
+  lambda_role_arn = module.iam_role_lambda_processing.arn
+  handler         = "data_processing.lambda_handler"
+  runtime         = "python3.12"
+  timeout         = 300
+  memory_size     = 512
+  layers = [
+    "arn:aws:lambda:${var.aws_region}:336392948345:layer:AWSSDKPandas-Python312:13"
+  ]
   sns_alert_topic_arn = null
 
 }
@@ -123,13 +129,16 @@ module "lambda_processing" {
 module "lambda_dca" {
   source = "./modules/lambda_function"
 
-  function_name         = "${var.project_name}-${var.environment}-dca"
-  source_file           = "${path.root}/../portfolio_data_platform/src/t212_automation/dca.py"
-  lambda_role_arn       = module.iam_role_lambda_dca.arn
-  handler               = "dca.lambda_handler"
-  runtime               = "python3.12"
-  timeout               = 300
-  memory_size           = 512
+  function_name   = "${var.project_name}-${var.environment}-dca"
+  source_file     = "${path.root}/../portfolio_data_platform/src/t212_automation/dca.py"
+  lambda_role_arn = module.iam_role_lambda_dca.arn
+  handler         = "dca.lambda_handler"
+  runtime         = "python3.12"
+  timeout         = 300
+  memory_size     = 512
+  layers = [
+    "arn:aws:lambda:${var.aws_region}:336392948345:layer:AWSSDKPandas-Python312:13"
+  ]
   enable_failure_alerts = true
   sns_alert_topic_arn   = module.alerts.arn
 }
@@ -612,9 +621,9 @@ module "iam_role_step_function" {
     effect = "Allow"
     action = ["lambda:InvokeFunction"]
     resource = [
-      module.lambda_ingestion.arn,
-      module.lambda_transformation.arn,
-      module.lambda_processing.arn
+      "${module.lambda_ingestion.arn}:*",
+      "${module.lambda_transformation.arn}:*",
+      "${module.lambda_processing.arn}:*"
     ]
   }]
 }
