@@ -92,7 +92,7 @@ module "lambda_ingestion" {
     ENVIRONMENT  = var.environment
     REGION_NAME  = var.aws_region
     S3_BUCKET    = module.data_lake.bucket_name
-    SECRET_NAME  = module.t212_secret.secret_name
+    T212_SECRET_NAME  = module.t212_secret.secret_name
     LOG_LEVEL    = "INFO"
     T212_API_URL = "https://live.trading212.com/api/v0"
 
@@ -163,6 +163,18 @@ module "lambda_dca" {
   ]
   enable_failure_alerts = true
   sns_alert_topic_arn   = module.alerts.arn
+  environment_variables = {
+    ENVIRONMENT   = var.environment
+    REGION_NAME   = var.aws_region
+    S3_BUCKET     = module.data_lake.bucket_name
+    GLUE_DATABASE = module.portfolio_database.name
+    LOG_TABLE = module.trade_log.name
+    NOTIFICATION_EMAIL = "akinkunmimustapha1@gmail.com"
+    T212_SECRET_NAME = "prod/financial/t212-dca-automation"
+    T212_URL = "https://live.trading212.com/api/v0/"
+    LOG_LEVEL     = "INFO"
+
+  }
 }
 
 // Database
