@@ -46,3 +46,7 @@ terraform show -json tfplan |
 ```sh
 terraform init -reconfigure
 ```
+
+```sh
+terraform fmt -recursive
+```

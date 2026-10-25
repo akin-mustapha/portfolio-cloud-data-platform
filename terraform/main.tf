@@ -2,6 +2,13 @@ provider "aws" {
   region = var.aws_region
 }
 
+// Glue
+
+module "portfolio_database" {
+  source = "./modules/glue_catalog_database"
+  name   = "${var.project_name}-${var.environment}"
+}
+
 // Storage
 
 module "data_lake" {
@@ -106,6 +113,14 @@ module "lambda_transformation" {
     "arn:aws:lambda:${var.aws_region}:336392948345:layer:AWSSDKPandas-Python312:13"
   ]
   sns_alert_topic_arn = null
+  environment_variables = {
+    ENVIRONMENT   = var.environment
+    REGION_NAME   = var.aws_region
+    S3_BUCKET     = module.data_lake.bucket_name
+    GLUE_DATABASE = module.portfolio_database.name
+    LOG_LEVEL     = "INFO"
+
+  }
 
 }
 
@@ -123,7 +138,14 @@ module "lambda_processing" {
     "arn:aws:lambda:${var.aws_region}:336392948345:layer:AWSSDKPandas-Python312:13"
   ]
   sns_alert_topic_arn = null
+  environment_variables = {
+    ENVIRONMENT   = var.environment
+    REGION_NAME   = var.aws_region
+    S3_BUCKET     = module.data_lake.bucket_name
+    GLUE_DATABASE = module.portfolio_database.name
+    LOG_LEVEL     = "INFO"
 
+  }
 }
 
 module "lambda_dca" {
@@ -379,6 +401,28 @@ module "iam_role_lambda_transformation" {
       "effect" = "Allow"
       "action" = ["sns:Publish"]
       "resource" : [module.alerts.arn]
+    },
+    {
+      "sid"    = "Glue"
+      "effect" = "Allow"
+      "action" = [
+        "glue:GetDatabase",
+        "glue:GetTable",
+        "glue:GetTables",
+        "glue:CreateTable",
+        "glue:UpdateTable",
+        "glue:GetPartitions",
+        "glue:CreatePartition",
+        "glue:BatchCreatePartition",
+        "glue:BatchGetPartition",
+        "glue:UpdatePartition",
+      ]
+      resource = [
+        "arn:aws:glue:${var.aws_region}:${var.aws_account_id}:catalog",
+        module.portfolio_database.arn,
+        "arn:aws:glue:${var.aws_region}:${var.aws_account_id}:table/${module.portfolio_database.name}/*",
+      ]
+
     }
   ]
 }
@@ -442,6 +486,7 @@ module "iam_role_lambda_processing" {
       "action" = [
         "s3:GetObject",
         "s3:PutObject",
+        "s3:DeleteObject"
       ]
       "resource" : [
         "${module.data_lake.arn}/*"
@@ -484,6 +529,29 @@ module "iam_role_lambda_processing" {
       "resource" = [
         module.trade_log.arn # Or "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/trade_log"
       ]
+    },
+    {
+      "sid"    = "Glue"
+      "effect" = "Allow"
+      "action" = [
+        "glue:GetDatabase",
+        "glue:GetTable",
+        "glue:GetTables",
+        "glue:CreateTable",
+        "glue:UpdateTable",
+        "glue:GetPartitions",
+        "glue:CreatePartition",
+        "glue:BatchCreatePartition",
+        "glue:BatchGetPartition",
+        "glue:UpdatePartition",
+        "glue:DeleteTable"
+      ]
+      resource = [
+        "arn:aws:glue:${var.aws_region}:${var.aws_account_id}:catalog",
+        module.portfolio_database.arn,
+        "arn:aws:glue:${var.aws_region}:${var.aws_account_id}:table/${module.portfolio_database.name}/*",
+      ]
+
     }
   ]
 }
@@ -639,4 +707,27 @@ module "orchesration" {
   asl = file(
     "${path.root}/../portfolio_data_platform/src/step_functions/portolio-dev-orchestration.asl.json"
   )
+}
+
+// tables
+module "fact_t212_positions_test" {
+  source = "./modules/glue_catalog_table"
+
+  name          = "fact_t212_positions_test"
+  database_name = module.portfolio_database.name
+  location      = "s3://${module.data_lake.bucket_name}/data/trading-212/gold/fact_t212_positions/"
+
+  columns = [
+    { name = "ticker", type = "string" },
+    { name = "quantity", type = "double" },
+    { name = "current_price", type = "double" },
+    { name = "current_value", type = "double" },
+    { name = "pnl", type = "double" },
+    { name = "date_id", type = "bigint" },
+    { name = "ingested_timestamp", type = "timestamp" }
+  ]
+
+  partition_keys = [
+    { name = "ingested_date", type = "date" }
+  ]
 }
