@@ -53,3 +53,9 @@ variable "environment_variables" {
   type        = map(string)
   default     = {}
 }
+
+variable "layers" {
+  description = "Optional Lambda layer ARNs."
+  type        = list(string)
+  default     = []
+}
