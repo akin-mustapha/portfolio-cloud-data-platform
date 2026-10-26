@@ -3,21 +3,8 @@ variable "function_name" {
   type = string
 }
 
-variable "source_file" {
-  type = string
-}
-
 variable "lambda_role_arn" {
   type = string
-}
-
-variable "handler" {
-  type = string
-}
-
-variable "runtime" {
-  type    = string
-  default = "python3.12"
 }
 
 variable "timeout" {
@@ -58,4 +45,41 @@ variable "layers" {
   description = "Optional Lambda layer ARNs."
   type        = list(string)
   default     = []
+}
+
+variable "package_type" {
+  description = "Lambda deployment package type."
+  type        = string
+  default     = "Zip"
+
+  validation {
+    condition     = contains(["Zip", "Image"], var.package_type)
+    error_message = "package_type must be either Zip or Image."
+  }
+}
+
+variable "source_file" {
+  description = "Path to the Python source file for ZIP deployments."
+  type        = string
+  default     = null
+  nullable    = true
+}
+
+variable "image_uri" {
+  description = "ECR image URI for image-based Lambda deployments."
+  type        = string
+  default     = null
+  nullable    = true
+}
+
+variable "runtime" {
+  description = "Lambda runtime for ZIP deployments."
+  type        = string
+  default     = "python3.12"
+}
+
+variable "handler" {
+  description = "Lambda handler for ZIP deployments."
+  type        = string
+  default     = "lambda_function.lambda_handler"
 }
