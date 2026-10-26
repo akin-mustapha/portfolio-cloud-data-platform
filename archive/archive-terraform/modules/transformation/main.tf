@@ -1,4 +1,4 @@
-resource aws_glue_job "bronze_to_silver" {
+resource "aws_glue_job" "bronze_to_silver" {
   name     = "t212-bronze-to-silver"
   role_arn = aws_iam_role.glue.arn
 
@@ -18,7 +18,7 @@ resource aws_glue_job "bronze_to_silver" {
 }
 
 
-resource aws_glue_job "silver_to_gold" {
+resource "aws_glue_job" "silver_to_gold" {
   name     = "t212-silver-to-gold"
   role_arn = aws_iam_role.glue.arn
 

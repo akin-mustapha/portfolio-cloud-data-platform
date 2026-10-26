@@ -2,7 +2,7 @@ terraform {
   required_version = "~> 1.15.8"
   required_providers {
     aws = {
-      source = "hashicorp/aws"
+      source  = "hashicorp/aws"
       version = "~> 5.0"
     }
   }
@@ -24,7 +24,7 @@ import {
 # }
 import {
   to = aws_lambda_function.ingestion
-  id = "t212-ingestion"   # your actual function name
+  id = "t212-ingestion" # your actual function name
 }
 import {
   to = aws_iam_role.ingestion
@@ -32,7 +32,7 @@ import {
 }
 import {
   to = aws_iam_role_policy.ingestion
-  id = "<role-name>:<policy-name>"   # note the colon-separated format for inline policies
+  id = "<role-name>:<policy-name>" # note the colon-separated format for inline policies
 }
 import {
   to = aws_cloudwatch_log_group.ingestion
