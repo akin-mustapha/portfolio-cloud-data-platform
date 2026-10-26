@@ -1,3 +1,6 @@
+"""
+ This is an applicationuse case, implement port and adapter
+"""
 import base64
 import json
 import logging
