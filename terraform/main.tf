@@ -81,7 +81,7 @@ module "lambda_ingestion" {
   source = "./modules/lambda_function"
 
   function_name       = "${var.project_name}-${var.environment}-ingestion"
-  source_file         = "${path.root}/../portfolio_data_platform/src/t212_pipeline/data_ingestion.py"
+  source_file         = "${path.root}/../portfolio/t212_pipeline/data_ingestion.py"
   lambda_role_arn     = module.iam_role_lambda_ingestion.arn
   handler             = "data_ingestion.lambda_handler"
   runtime             = "python3.12"
@@ -89,12 +89,12 @@ module "lambda_ingestion" {
   memory_size         = 512
   sns_alert_topic_arn = null
   environment_variables = {
-    ENVIRONMENT  = var.environment
-    REGION_NAME  = var.aws_region
-    S3_BUCKET    = module.data_lake.bucket_name
-    T212_SECRET_NAME  = module.t212_secret.secret_name
-    LOG_LEVEL    = "INFO"
-    T212_API_URL = "https://live.trading212.com/api/v0"
+    ENVIRONMENT      = var.environment
+    REGION_NAME      = var.aws_region
+    S3_BUCKET        = module.data_lake.bucket_name
+    T212_SECRET_NAME = module.t212_secret.secret_name
+    LOG_LEVEL        = "INFO"
+    T212_API_URL     = "https://live.trading212.com/api/v0"
 
   }
 }
@@ -103,7 +103,7 @@ module "lambda_transformation" {
   source = "./modules/lambda_function"
 
   function_name   = "${var.project_name}-${var.environment}-transformation"
-  source_file     = "${path.root}/../portfolio_data_platform/src/t212_pipeline/data_transformation.py"
+  source_file     = "${path.root}/../portfolio/t212_pipeline/data_transformation.py"
   lambda_role_arn = module.iam_role_lambda_transformation.arn
   handler         = "data_transformation.lambda_handler"
   runtime         = "python3.12"
@@ -128,7 +128,7 @@ module "lambda_processing" {
   source = "./modules/lambda_function"
 
   function_name   = "${var.project_name}-${var.environment}-processing"
-  source_file     = "${path.root}/../portfolio_data_platform/src/t212_pipeline/data_processing.py"
+  source_file     = "${path.root}/../portfolio/t212_pipeline/data_processing.py"
   lambda_role_arn = module.iam_role_lambda_processing.arn
   handler         = "data_processing.lambda_handler"
   runtime         = "python3.12"
@@ -151,28 +151,28 @@ module "lambda_processing" {
 module "lambda_dca" {
   source = "./modules/lambda_function"
 
-  function_name   = "${var.project_name}-${var.environment}-dca"
-  source_file     = "${path.root}/../portfolio_data_platform/src/t212_automation/dca.py"
-  lambda_role_arn = module.iam_role_lambda_dca.arn
-  handler         = "dca.lambda_handler"
-  runtime         = "python3.12"
-  timeout         = 300
-  memory_size     = 512
-  layers = [
-    "arn:aws:lambda:${var.aws_region}:336392948345:layer:AWSSDKPandas-Python312:13"
-  ]
+  package_type = "Image"
+
+  function_name         = "${var.project_name}-${var.environment}-dca"
+  image_uri             = "${aws_ecr_repository.t212_automation_image.repository_url}:latest"
+  lambda_role_arn       = module.iam_role_lambda_dca.arn
+  handler               = "dca.lambda_handler"
+  runtime               = "python3.12"
+  timeout               = 300
+  memory_size           = 512
+  layers                = []
   enable_failure_alerts = true
   sns_alert_topic_arn   = module.alerts.arn
   environment_variables = {
-    ENVIRONMENT   = var.environment
-    REGION_NAME   = var.aws_region
-    S3_BUCKET     = module.data_lake.bucket_name
-    GLUE_DATABASE = module.portfolio_database.name
-    LOG_TABLE = module.trade_log.name
+    ENVIRONMENT        = var.environment
+    REGION_NAME        = var.aws_region
+    S3_BUCKET          = module.data_lake.bucket_name
+    GLUE_DATABASE      = module.portfolio_database.name
+    LOG_TABLE          = module.trade_log.name
     NOTIFICATION_EMAIL = "akinkunmimustapha1@gmail.com"
-    T212_SECRET_NAME = "prod/financial/t212-dca-automation"
-    T212_URL = "https://live.trading212.com/api/v0/"
-    LOG_LEVEL     = "INFO"
+    T212_SECRET_NAME   = "prod/financial/t212-dca-automation"
+    T212_URL           = "https://live.trading212.com/api/v0/"
+    LOG_LEVEL          = "INFO"
 
   }
 }
@@ -678,6 +678,15 @@ module "iam_role_lambda_dca" {
         "ses:SendRawEmail"
       ]
       "resource" = ["*"]
+    },
+    {
+      "sid"    = "LambdaECRImageRetrievalPolicy"
+      "effect" = "Allow"
+      "action" = [
+        "ecr:BatchGetImage",
+        "ecr:GetDownloadUrlForLayer"
+      ]
+      "resource" = ["*"]
     }
   ]
 }
@@ -729,4 +738,13 @@ module "silver_positions_table" {
   location      = "s3://${module.data_lake.bucket_name}/data/trading-212/silver/positions/"
 
   schema = file("${path.root}/schemas/silver_t212_positions.json")
+}
+
+resource "aws_ecr_repository" "t212_automation_image" {
+  name                 = "${var.project_name}-${var.environment}/t212-automation"
+  image_tag_mutability = "MUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
 }
