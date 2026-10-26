@@ -58,6 +58,19 @@ Data platform to ingest asset data from trading 212
 
 ### Tech Stack
 
+- Terraform
+- Docker
+- AWS
+- Git
+- GitHub
+
+**Application:**
+
+- Python
+- React
+
+**Infrastructure:**
+
 - Event Schedular
 - Lambda
 - S3
@@ -65,7 +78,6 @@ Data platform to ingest asset data from trading 212
 - Glue Data Catalog
 - Athena
 - Grafana
-- Python
 
 ## Design
 
@@ -161,3 +173,16 @@ aws s3api put-public-access-block \
 
 - Add a lock to dca script. Check that asset hasn't been purchased within a suitable time interval.
 - Orchestrate workflow using `Aws Step Function`
+
+##
+
+![alt text](image.png)
+
+```txt
+{
+  "errorMessage": "Unable to import module 'main': attempted relative import with no known parent package",
+  "errorType": "Runtime.ImportModuleError",
+  "requestId": "",
+  "stackTrace": []
+}
+```
