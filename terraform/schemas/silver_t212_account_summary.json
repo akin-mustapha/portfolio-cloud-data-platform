@@ -1,0 +1,51 @@
+[
+  {
+    "Name": "id",
+    "Type": "bigint"
+  },
+  {
+    "Name": "currency",
+    "Type": "string"
+  },
+  {
+    "Name": "total_value",
+    "Type": "double"
+  },
+  {
+    "Name": "cash_available_to_trade",
+    "Type": "double"
+  },
+  {
+    "Name": "cash_reserved_for_orders",
+    "Type": "bigint"
+  },
+  {
+    "Name": "cash_in_pies",
+    "Type": "double"
+  },
+  {
+    "Name": "total_value_investmented",
+    "Type": "double"
+  },
+  {
+    "Name": "total_investment_cost",
+    "Type": "double"
+  },
+  {
+    "Name": "realized_profit_loss",
+    "Type": "double"
+  },
+  {
+    "Name": "unrealized_profit_loss",
+    "Type": "double"
+  },
+  {
+    "Name": "ingested_timestamp",
+    "Type": "timestamp"
+  },
+  {
+    "Name": "ingested_date",
+    "Type": "date",
+    "PartitionKey": "Partition (0)"
+  }
+]

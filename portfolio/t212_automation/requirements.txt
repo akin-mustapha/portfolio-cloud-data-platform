@@ -1,0 +1,9 @@
+requests
+pandas
+boto3
+botocore
+botocore[crt]
+awswrangler
+httpx
+pydantic
+pydantic-settings
