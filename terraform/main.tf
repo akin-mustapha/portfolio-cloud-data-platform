@@ -386,6 +386,7 @@ module "iam_role_lambda_transformation" {
       "action" = [
         "s3:GetObject",
         "s3:PutObject",
+        "s3:DeleteObject"
       ]
       "resource" : [
         "${module.data_lake.arn}/*"
@@ -712,9 +713,19 @@ module "iam_role_step_function" {
     resource = [
       "${module.lambda_ingestion.arn}:*",
       "${module.lambda_transformation.arn}:*",
-      "${module.lambda_processing.arn}:*"
+      "${module.lambda_processing.arn}:*",
+      "${module.lambda_dca.arn}:*"
     ]
-  }]
+    },
+    {
+      sid    = "SNS"
+      effect = "Allow"
+      action = ["SNS:Publish"]
+      resource = [
+        module.alerts.arn
+      ]
+    }
+  ]
 }
 
 // Step Function
