@@ -748,3 +748,27 @@ resource "aws_ecr_repository" "t212_automation_image" {
     scan_on_push = true
   }
 }
+
+resource "aws_ecr_lifecycle_policy" "t212_automation" {
+  repository = aws_ecr_repository.t212_automation_image.name
+
+  policy = jsonencode({
+    rules = [
+      {
+        rulePriority = 1
+        description  = "Keep only one image tagged latest"
+
+        selection = {
+          tagStatus      = "tagged"
+          tagPatternList = ["latest"]
+          countType      = "imageCountMoreThan"
+          countNumber    = 1
+        }
+
+        action = {
+          type = "expire"
+        }
+      }
+    ]
+  })
+}
