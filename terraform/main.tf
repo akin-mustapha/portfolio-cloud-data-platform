@@ -80,14 +80,15 @@ module "schedule_us_close" {
 module "lambda_ingestion" {
   source = "./modules/lambda_function"
 
-  function_name       = "${var.project_name}-${var.environment}-ingestion"
-  source_file         = "${path.root}/../portfolio/t212_pipeline/data_ingestion.py"
-  lambda_role_arn     = module.iam_role_lambda_ingestion.arn
-  handler             = "data_ingestion.lambda_handler"
-  runtime             = "python3.12"
-  timeout             = 300
-  memory_size         = 512
-  sns_alert_topic_arn = null
+  function_name         = "${var.project_name}-${var.environment}-ingestion"
+  source_file           = "${path.root}/../portfolio/t212_pipeline/data_ingestion.py"
+  lambda_role_arn       = module.iam_role_lambda_ingestion.arn
+  handler               = "data_ingestion.lambda_handler"
+  runtime               = "python3.12"
+  timeout               = 300
+  memory_size           = 512
+  enable_failure_alerts = true
+  sns_alert_topic_arn   = module.alerts.arn
   environment_variables = {
     ENVIRONMENT      = var.environment
     REGION_NAME      = var.aws_region
@@ -112,7 +113,8 @@ module "lambda_transformation" {
   layers = [
     "arn:aws:lambda:${var.aws_region}:336392948345:layer:AWSSDKPandas-Python312:13"
   ]
-  sns_alert_topic_arn = null
+  enable_failure_alerts = true
+  sns_alert_topic_arn   = module.alerts.arn
   environment_variables = {
     ENVIRONMENT   = var.environment
     REGION_NAME   = var.aws_region
@@ -137,7 +139,8 @@ module "lambda_processing" {
   layers = [
     "arn:aws:lambda:${var.aws_region}:336392948345:layer:AWSSDKPandas-Python312:13"
   ]
-  sns_alert_topic_arn = null
+  enable_failure_alerts = true
+  sns_alert_topic_arn   = module.alerts.arn
   environment_variables = {
     ENVIRONMENT   = var.environment
     REGION_NAME   = var.aws_region
