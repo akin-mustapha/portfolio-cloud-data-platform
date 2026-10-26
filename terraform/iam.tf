@@ -46,7 +46,7 @@ resource "aws_iam_role_policy" "financial_dataflow" {
       },
 
       {
-        Sid = "Lambda"
+        Sid    = "Lambda"
         Effect = "Allow"
         Action = [
           "lambda:InvokeFunction"
@@ -91,9 +91,9 @@ resource "aws_iam_role_policy" "lambda_pipeline" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid      = "CloudWatchLogs"
-        Effect   = "Allow"
-        Action   = [
+        Sid    = "CloudWatchLogs"
+        Effect = "Allow"
+        Action = [
           "logs:CreateLogGroup",
           "logs:CreateLogStream",
           "logs:PutLogEvents"
@@ -101,27 +101,27 @@ resource "aws_iam_role_policy" "lambda_pipeline" {
         Resource = ["arn:aws:logs:${var.aws_region}:${var.aws_account_id}:log-group:/aws/lambda/*"]
       },
       {
-        Sid      = "Secrets"
-        Effect   = "Allow"
-        Action   = ["secretsmanager:GetSecretValue"]
+        Sid    = "Secrets"
+        Effect = "Allow"
+        Action = ["secretsmanager:GetSecretValue"]
         Resource = [
           aws_secretsmanager_secret.trading212.arn,
           "arn:aws:secretsmanager:eu-west-1:861580917950:secret:prod/financial/t212-dca-automation-UqUvlT"
-          ]
+        ]
       },
       {
-        Sid      = "S3Bucket"
-        Effect   = "Allow"
-        Action   = [
+        Sid    = "S3Bucket"
+        Effect = "Allow"
+        Action = [
           "s3:ListBucket",
           "s3:GetBucketLocation"
         ]
         Resource = [aws_s3_bucket.financial_dataflow.arn]
       },
       {
-        Sid      = "S3Objects"
-        Effect   = "Allow"
-        Action   = [
+        Sid    = "S3Objects"
+        Effect = "Allow"
+        Action = [
           "s3:GetObject",
           "s3:PutObject",
           "s3:DeleteObject"
@@ -129,9 +129,9 @@ resource "aws_iam_role_policy" "lambda_pipeline" {
         Resource = ["${aws_s3_bucket.financial_dataflow.arn}/*"]
       },
       {
-        Sid      = "Glue"
-        Effect   = "Allow"
-        Action   = [
+        Sid    = "Glue"
+        Effect = "Allow"
+        Action = [
           "glue:GetDatabase",
           "glue:GetTable",
           "glue:CreateTable",
@@ -151,9 +151,9 @@ resource "aws_iam_role_policy" "lambda_pipeline" {
         ]
       },
       {
-        Sid      = "Athena"
-        Effect   = "Allow"
-        Action   = [
+        Sid    = "Athena"
+        Effect = "Allow"
+        Action = [
           "athena:GetWorkGroup",
           "athena:StartQueryExecution",
           "athena:GetQueryExecution",
@@ -173,9 +173,9 @@ resource "aws_iam_role_policy" "lambda_pipeline" {
         Resource = [aws_sns_topic.pipeline_alerts.arn]
       },
       {
-        Sid      = "DynamoDb"
-        Effect   = "Allow"
-        Action   = [
+        Sid    = "DynamoDb"
+        Effect = "Allow"
+        Action = [
           "dynamodb:GetItem",
           "dynamodb:PutItem",
           "dynamodb:BatchGetItem",
@@ -184,7 +184,7 @@ resource "aws_iam_role_policy" "lambda_pipeline" {
           "dynamodb:Scan"
         ]
         Resource = [
-          aws_dynamodb_table.trade_log.arn  # Or "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/trade_log"
+          aws_dynamodb_table.trade_log.arn # Or "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/trade_log"
         ]
       },
       {

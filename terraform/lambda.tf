@@ -19,10 +19,10 @@ resource "aws_lambda_function" "pipeline" {
   function_name = "t212-data-${each.key}"
   role          = aws_iam_role.lambda_pipeline.arn
 
-  handler       = "t212-data-${each.key}.lambda_handler"
-  runtime       = "python3.12"
-  timeout       = 300
-  memory_size   = 512
+  handler     = "t212-data-${each.key}.lambda_handler"
+  runtime     = "python3.12"
+  timeout     = 300
+  memory_size = 512
 
   filename         = data.archive_file.pipeline[each.key].output_path
   source_code_hash = data.archive_file.pipeline[each.key].output_base64sha256
@@ -62,10 +62,10 @@ resource "aws_lambda_function" "t212_dca" {
   function_name = "t212-dca"
   role          = aws_iam_role.lambda_pipeline.arn
 
-  handler       = "t212-dca.lambda_handler"
-  runtime       = "python3.12"
-  timeout       = 300
-  memory_size   = 512  # Recommended allocation for Pandas + Athena execution
+  handler     = "t212-dca.lambda_handler"
+  runtime     = "python3.12"
+  timeout     = 300
+  memory_size = 512 # Recommended allocation for Pandas + Athena execution
 
   filename         = data.archive_file.t212_dca.output_path
   source_code_hash = data.archive_file.t212_dca.output_base64sha256
