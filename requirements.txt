@@ -13,3 +13,4 @@ ipykernel
 httpx
 pydantic
 pydantic-settings
+mdformat

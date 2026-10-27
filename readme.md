@@ -54,7 +54,7 @@ Data platform to ingest asset data from trading 212
 
 ## Architecture
 
-![alt text](<./docs/img/architecture-diagram-v3.jpg>)
+![alt text](./docs/img/architecture-diagram-v3.jpg)
 
 ### Tech Stack
 
@@ -145,7 +145,7 @@ aws s3api put-public-access-block \
 #### Configure Assumed Role for Grafana
 
 1. Create new role on AWS
-2. Attach `AmazonGrafanaCloudWatchAccess` policy
+1. Attach `AmazonGrafanaCloudWatchAccess` policy
 
 #### Add new Data Source
 
@@ -174,9 +174,9 @@ aws s3api put-public-access-block \
 - Add a lock to dca script. Check that asset hasn't been purchased within a suitable time interval.
 - Orchestrate workflow using `Aws Step Function`
 
-##
+## Python dependency management
 
-![alt text](image.png)
+![alt text](./docs/img/image.png)
 
 ```txt
 {
@@ -185,4 +185,12 @@ aws s3api put-public-access-block \
   "requestId": "",
   "stackTrace": []
 }
+```
+
+## Format md File
+
+```sh
+pip3 install mdformat
+
+mdformat README.md
 ```

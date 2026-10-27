@@ -137,7 +137,7 @@ FROM public.ecr.aws/lambda/python:3.11
 FROM public.ecr.aws/lambda/python:3.12
 ```
 
-## InvalidParameterValueException: The image manifest, config or layer media type for the source image 86158091... is not supported
+## Container deployment compatibility
 
 ```txt
 Do you want to perform these actions?
@@ -171,13 +171,13 @@ docker build \
 
 Push Image to ecr
 
-```sh
+````sh
 
 ```sh
 docker push 861580917950.dkr.ecr.eu-west-1.amazonaws.com/portfolio-dev/t212-automation:latest
-```
+````
 
-##
+## Issue pushing Image to ECR
 
 ```sh
  861580917950.dkr.ecr.eu-west-1.amazonaws.com/portfolio-dev/t212-automation:latest
