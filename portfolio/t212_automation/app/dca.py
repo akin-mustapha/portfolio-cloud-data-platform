@@ -20,9 +20,12 @@ from pydantic import BaseModel, Field
 import pandas as pd
 
 import os
+from dotenv import load_dotenv
+
+load_dotenv(".env")
 
 ENVIRONMENT = os.getenv("ENVIRONMENT", "dev")
-S3_BUCKET = os.environ["S3_BUCKET"]
+S3_BUCKET = os.getenv("S3_BUCKET")
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 REGION_NAME = os.getenv("REGION_NAME")
 GLUE_DATABASE = os.getenv("GLUE_DATABASE")
@@ -56,6 +59,7 @@ class Settings(BaseSettings):
     log_database: str
     log_table: str
     notification_email: str
+
 
 session = boto3.session.Session()
 
@@ -129,7 +133,7 @@ class Position(BaseModel):
     current_price: float
 
 
-def get_latest_position(ticker: str, database: str):
+def get_latest_position(ticker: str, database: str, s3_bucket):
     """Fetch latest position metrics and current price from Athena."""
 
     logger.info(
@@ -149,7 +153,8 @@ def get_latest_position(ticker: str, database: str):
         df = wr.athena.read_sql_query(
             sql=sql,
             database=database,
-            s3_output="s3://financial-dataflow/query-results/",
+            s3_output=f"s3://{s3_bucket}/query-results/",
+            ctas_approach=False,
         )
         if df.empty:
             logger.warning(
@@ -425,7 +430,6 @@ def dca():
     logger.info("Trading212 DCA Execution")
     logger.info("=" * 60)
 
-
     settings = Settings(
         api_domain=T212_URL,
         api_enpoint="equity/orders/market",
@@ -461,8 +465,8 @@ def dca():
             trade_df.groupby(["asset", "vendor"]).created_datetime.max().values[0]
         )
         time_diff = now - last_trade_day
-        
-    if time_diff < timedelta(days=interval_days):
+
+    if time_diff < timedelta(days=interval_days) and len(trade_df) >= 1:
         logger.info(
             "Asset %s was purchased in the last %d days. Skipping buy.",
             settings.ticker,
@@ -474,7 +478,9 @@ def dca():
         }
 
     # 2. Athena Position Data
-    metrics = get_latest_position(settings.ticker, settings.database)
+    metrics = get_latest_position(
+        settings.ticker, settings.database, s3_bucket=S3_BUCKET
+    )
     if not metrics:
         return {
             "statusCode": 500,
@@ -585,7 +591,6 @@ def dca():
             }
         ),
     }
-
 
 
 if __name__ == "__main__":
