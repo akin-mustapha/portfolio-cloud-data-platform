@@ -1,4 +1,3 @@
-
 from app.dca import dca
 
 # ==========================================
@@ -14,5 +13,5 @@ if __name__ == "__main__":
     print("Starting local execution...")
 
     result = dca()
-    
+
     print("Execution Result:", result)

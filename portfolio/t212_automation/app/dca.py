@@ -60,6 +60,7 @@ class Settings(BaseSettings):
     log_table: str
     notification_email: str
 
+
 session = boto3.session.Session()
 
 # ==========================================
@@ -429,7 +430,6 @@ def dca():
     logger.info("Trading212 DCA Execution")
     logger.info("=" * 60)
 
-
     settings = Settings(
         api_domain=T212_URL,
         api_enpoint="equity/orders/market",
@@ -465,7 +465,7 @@ def dca():
             trade_df.groupby(["asset", "vendor"]).created_datetime.max().values[0]
         )
         time_diff = now - last_trade_day
-    
+
     if time_diff < timedelta(days=interval_days) and len(trade_df) >= 1:
         logger.info(
             "Asset %s was purchased in the last %d days. Skipping buy.",
@@ -478,7 +478,9 @@ def dca():
         }
 
     # 2. Athena Position Data
-    metrics = get_latest_position(settings.ticker, settings.database, s3_bucket=S3_BUCKET)
+    metrics = get_latest_position(
+        settings.ticker, settings.database, s3_bucket=S3_BUCKET
+    )
     if not metrics:
         return {
             "statusCode": 500,
@@ -589,7 +591,6 @@ def dca():
             }
         ),
     }
-
 
 
 if __name__ == "__main__":
