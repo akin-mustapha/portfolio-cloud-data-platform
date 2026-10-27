@@ -113,7 +113,6 @@ npm install recharts
 cd frontend/v1 && npm run dev
 ```
 
-
 ## Troubleshooting
 
 Error after executing
