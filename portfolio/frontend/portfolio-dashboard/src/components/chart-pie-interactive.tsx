@@ -1,8 +1,9 @@
 "use client"
 
 import * as React from "react"
-import {Pie, Sector } from "recharts"
+import { Label, Pie, PieChart, Sector } from "recharts"
 import type {
+  PieSectorDataItem,
   PieSectorShapeProps,
 } from "recharts/types/polar/Pie"
 
