@@ -176,7 +176,7 @@ aws s3api put-public-access-block \
 
 ## Python dependency management
 
-![alt text](image.png)
+![alt text](./docs/img/image.png)
 
 ```txt
 {
