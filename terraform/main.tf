@@ -638,6 +638,28 @@ module "iam_role_lambda_dca" {
 
     },
     {
+      "sid"    = "Glue"
+      "effect" = "Allow"
+      "action" = [
+        "glue:GetDatabase",
+        "glue:GetTable",
+        "glue:CreateTable",
+        "glue:UpdateTable",
+        "glue:GetPartitions",
+        "glue:CreatePartition",
+        "glue:BatchCreatePartition",
+        "glue:BatchGetPartition",
+        "glue:UpdatePartition",
+        # "glue:DeleteTable"
+      ]
+      "resource" = [
+        "arn:aws:glue:${var.aws_region}:${var.aws_account_id}:catalog",
+        "arn:aws:glue:${var.aws_region}:${var.aws_account_id}:database/${var.project_name}-${var.environment}",
+        "arn:aws:glue:${var.aws_region}:${var.aws_account_id}:database/default",
+        "arn:aws:glue:${var.aws_region}:${var.aws_account_id}:table/${var.project_name}-${var.environment}/*"
+      ]
+    },
+    {
       "sid"    = "Athena"
       "effect" = "Allow"
       "action" = [
