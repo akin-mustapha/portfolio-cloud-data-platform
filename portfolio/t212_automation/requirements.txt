@@ -7,3 +7,4 @@ awswrangler
 httpx
 pydantic
 pydantic-settings
+dotenv

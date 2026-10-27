@@ -17,7 +17,7 @@ aws ecr get-login-password --region eu-west-1 | docker login --username AWS --pa
 ```
 
 ```sh
-docker build -t portfolio-dev/t212-automation portfolio/t212_automation
+docker build -t portfolio-dev/t212-automation .
 ```
 
 ```sh
@@ -165,7 +165,7 @@ docker build \
   --platform linux/amd64 \
   --provenance=false \
   --sbom=false \
-  -t 861580917950.dkr.ecr.eu-west-1.amazonaws.com/portfolio-dev/t212-automation:latest portfolio/t212_automation
+  -t 861580917950.dkr.ecr.eu-west-1.amazonaws.com/portfolio-dev/t212-automation:latest .
 
 ```
 
