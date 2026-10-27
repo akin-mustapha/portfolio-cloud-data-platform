@@ -81,7 +81,7 @@ module "lambda_ingestion" {
   source = "./modules/lambda_function"
 
   function_name         = "${var.project_name}-${var.environment}-ingestion"
-  source_file           = "${path.root}/../portfolio/t212_pipeline/data_ingestion.py"
+  source_file           = "${path.root}/../portfolio/backend/t212_pipeline/data_ingestion.py"
   lambda_role_arn       = module.iam_role_lambda_ingestion.arn
   handler               = "data_ingestion.lambda_handler"
   runtime               = "python3.12"
@@ -104,7 +104,7 @@ module "lambda_transformation" {
   source = "./modules/lambda_function"
 
   function_name   = "${var.project_name}-${var.environment}-transformation"
-  source_file     = "${path.root}/../portfolio/t212_pipeline/data_transformation.py"
+  source_file     = "${path.root}/../portfolio/backend/t212_pipeline/data_transformation.py"
   lambda_role_arn = module.iam_role_lambda_transformation.arn
   handler         = "data_transformation.lambda_handler"
   runtime         = "python3.12"
@@ -130,7 +130,7 @@ module "lambda_processing" {
   source = "./modules/lambda_function"
 
   function_name   = "${var.project_name}-${var.environment}-processing"
-  source_file     = "${path.root}/../portfolio/t212_pipeline/data_processing.py"
+  source_file     = "${path.root}/../portfolio/backend/t212_pipeline/data_processing.py"
   lambda_role_arn = module.iam_role_lambda_processing.arn
   handler         = "data_processing.lambda_handler"
   runtime         = "python3.12"

@@ -32,13 +32,13 @@ npm -v
 ### React
 
 ```sh
-npm create vite@latest ./portfolio-dashboard -- --template react-ts
+npm create vite@latest ./portfolio_dashboard -- --template react-ts
 ```
 
 ### Lucide React
 
 ```sh
-cd ./portfolio-dashboard && npm install lucide-react
+cd ./portfolio_dashboard && npm install lucide-react
 ```
 
 ### Tailwind

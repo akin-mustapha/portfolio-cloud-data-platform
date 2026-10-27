@@ -1,4 +1,4 @@
-from app.dca import dca
+from portfolio.backend.t212_automation.src.dca import dca
 
 # ==========================================
 # AWS LAMBDA ENTRYPOINT
