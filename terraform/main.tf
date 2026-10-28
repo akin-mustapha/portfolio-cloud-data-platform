@@ -808,3 +808,51 @@ resource "aws_ecr_lifecycle_policy" "t212_automation" {
     ]
   })
 }
+
+
+// Hosting
+
+variable "github_access_token" {
+  description = "GitHub token used by AWS Amplify"
+  type        = string
+  sensitive   = true
+}
+
+resource "aws_amplify_app" "portfolio_dashboard" {
+  name         = "${var.project_name}-${var.environment}-dashboard"
+  repository   = "https://github.com/akin-mustapha/portfolio-cloud-data-platform"
+  access_token = var.github_access_token
+
+  build_spec = <<-EOT
+    version: 1
+    frontend:
+      phases:
+        preBuild:
+          commands:
+            - cd portfolio/frontend/portfolio_dashboard
+            - npm ci
+        build:
+          commands:
+            - npm run build
+      artifacts:
+        baseDirectory: portfolio/frontend/portfolio_dashboard/dist
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - portfolio/frontend/portfolio_dashboard/node_modules/**/*
+  EOT
+
+  custom_rule {
+    source = "/<*>"
+    status = "404"
+    target = "/index.html"
+  }
+}
+
+resource "aws_amplify_branch" "portfolio_dashboard_main" {
+  app_id      = aws_amplify_app.portfolio_dashboard.id
+  branch_name = "main"
+
+  enable_auto_build = true
+}
