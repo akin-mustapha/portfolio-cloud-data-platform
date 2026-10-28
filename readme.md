@@ -33,6 +33,8 @@ Data platform to ingest asset data from trading 212
 - Terraform
 - Variable Blocks
 - Write, Plan, Apply
+- React Hook
+- Utility Class
 
 ## TODO
 
