@@ -50,3 +50,12 @@ terraform init -reconfigure
 ```sh
 terraform fmt -recursive
 ```
+
+**Deploying AWS Amplify:**
+
+- Require `fine-grained access` on github with `webhook` permission enabled.
+
+```sh
+export TF_VAR_github_access_token="<<TF_VAR_github_access_token>>"
+terraform apply
+```
