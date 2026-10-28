@@ -99,6 +99,8 @@ npx shadcn@latest init
 
 ```sh
 npx shadcn@latest add button
+
+npx shadcn@latest add sidebar-01
 ```
 
 ### Recharts
@@ -150,10 +152,26 @@ npm error command sh -c 'cva' ./portfolio-dashboard --template react-ts
 npm error A complete log of this run can be found in: /Users/kunmi/.npm/_logs/2026-10-27T20_05_07_366Z-debug-0.log
 ```
 
-## Fix
+### Fix
 
 - Downgrade typescript
 
 **Edit:** `package.json`
 
 from `"typescript": "~7.0.2"` to `"typescript": "~5.9.3"`
+
+## ShadCN Creates new @ folder when adding new components
+
+```sh
+npx shadcn@latest add button
+```
+
+![alt text](image.png)
+
+```sh
+npx shadcn@latest info
+```
+
+### Fix
+
+Add the baseUrl and paths properties to the compilerOptions section of tsconfig.json and tsconfig.app.json:
