@@ -16,6 +16,7 @@
 - Lucid react - Icon
 - Shadcn - Reusable components
 - Recharts
+- tabler/icons-react
 
 ## Setup and Install
 
@@ -175,3 +176,21 @@ npx shadcn@latest info
 ### Fix
 
 Add the baseUrl and paths properties to the compilerOptions section of tsconfig.json and tsconfig.app.json:
+
+## Section Card flex col to 1 on small screen
+
+Screen size Columns
+Mobile (below 640px) 1
+Small screens (sm, 640px+) 2
+Large screens (lg, 1024px+) 4
+
+**from:**
+
+```jsx
+
+    <div className="grid grid-cols-4 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs lg:px-1 @xl/main:grid-cols-2 @m/main:grid-cols-1 @5xl/main:grid-cols-4 dark:*:data-[slot=card]:bg-card">
+```
+
+```jsx
+<div className="grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs sm:grid-cols-2 lg:px-1 lg:grid-cols-4 dark:*:data-[slot=card]:bg-card">
+```

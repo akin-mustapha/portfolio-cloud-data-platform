@@ -13,26 +13,36 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  SidebarFooter,
 } from "@/components/ui/sidebar"
+import { NavUser } from "@/components/nav-user"
 
 // This is sample data.
 const data = {
   versions: ["1.0.1", "1.1.0-alpha", "2.0.0-beta1"],
+  user: {
+    name: "shadcn",
+    email: "m@example.com",
+    avatar: "/avatars/shadcn.jpg",
+  },
   navMain: [
     {
       title: "Dashboard",
       url: "#",
       items: [
         {
-          title: "Assets",
+          title: "Account",
           url: "#",
           isActive: true,
         },
-      ],
-      isActive: true,
+        {
+          title: "Assets",
+          url: "#",
+        },
+      ]
     },
     {
-      title: "Build Your Application",
+      title: "Risk",
       url: "#",
       items: [
         {
@@ -94,6 +104,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarGroup>
         ))}
       </SidebarContent>
+      <SidebarFooter>
+        <NavUser user={data.user} />
+      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   )
