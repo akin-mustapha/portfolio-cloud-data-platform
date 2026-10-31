@@ -56,7 +56,7 @@ Data platform to ingest asset data from trading 212
 
 ## Architecture
 
-![alt text](./docs/img/architecture-diagram-v3.jpg)
+![alt text](./docs/img/architecture-diagram-v4.png)
 
 ### Tech Stack
 
