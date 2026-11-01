@@ -16,17 +16,29 @@ python3 -m src.t212-dca
 aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin 861580917950.dkr.ecr.eu-west-1.amazonaws.com
 ```
 
-```sh
-docker build -t portfolio-dev/t212-automation .
-```
+**Build Command:**
 
 ```sh
+docker build -t portfolio-dev/t212-automation .
 docker tag portfolio-dev/t212-automation:latest 861580917950.dkr.ecr.eu-west-1.amazonaws.com/portfolio-dev/t212-automation:latest
 ```
 
 ```sh
+docker build \
+  --platform linux/amd64 \
+  --provenance=false \
+  --sbom=false \
+  -t 861580917950.dkr.ecr.eu-west-1.amazonaws.com/portfolio-dev/t212-automation:latest .
+
+```
+
+**Push Command:**
+
+```sh
 docker push 861580917950.dkr.ecr.eu-west-1.amazonaws.com/portfolio-dev/t212-automation:latest
 ```
+
+**Lambda Update Command:**
 
 ```sh
 aws lambda update-function-code \
