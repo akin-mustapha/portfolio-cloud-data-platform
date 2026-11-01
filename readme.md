@@ -196,3 +196,11 @@ pip3 install mdformat
 
 mdformat README.md
 ```
+
+## Grafana Setup
+
+- Create workspace
+- Create AWS IAM Identity Center USER
+- Make admin if need
+- Sign in
+- Add connection / data source
