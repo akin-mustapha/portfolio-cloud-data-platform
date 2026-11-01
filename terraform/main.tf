@@ -34,7 +34,7 @@ module "schedule_europe_open" {
 
   flexible_time_window = "OFF"
 
-  schedule_expression          = "cron(20 8 * * ? *)"
+  schedule_expression          = "cron(20 8 ? * MON-FRI *)"
   schedule_expression_timezone = "Europe/Dublin"
 
   // Need to update to step function
@@ -50,7 +50,7 @@ module "schedule_midday" {
 
   flexible_time_window = "OFF"
 
-  schedule_expression          = "cron(20 13 * * ? *)"
+  schedule_expression          = "cron(20 13 ? * MON-FRI *)"
   schedule_expression_timezone = "Europe/Dublin"
 
   // Need to update to step function
@@ -66,7 +66,7 @@ module "schedule_us_close" {
 
   flexible_time_window = "OFF"
 
-  schedule_expression          = "cron(30 16 * * ? *)"
+  schedule_expression          = "cron(30 16 ? * MON-FRI *)"
   schedule_expression_timezone = "Europe/Dublin"
 
   // Need to update to step function
