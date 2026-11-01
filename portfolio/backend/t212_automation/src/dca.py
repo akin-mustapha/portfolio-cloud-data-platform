@@ -52,7 +52,7 @@ class Settings(BaseSettings):
     api_enpoint: str
     api_secret_id: str
     ticker: str
-    equtity: float
+    equity: float
     max_drawdown_threshold: float
     min_drawdown_threshold: float
     database: str
@@ -271,7 +271,7 @@ def execute_market_order(
         return None
 
 
-def log_trade(
+def log_order(
     table_name: str,
     ticker: str,
     value: float,
@@ -281,7 +281,7 @@ def log_trade(
     """Record executed trade entry with calculated quantity into DynamoDB."""
 
     logger.info(
-        "[log_trade] Loggin Trade, table: %s",
+        "[log_order] Loggin Trade, table: %s",
         table_name,
     )
 
@@ -302,20 +302,20 @@ def log_trade(
         return trade
     except Exception as e:
         logger.error(
-            "[log_trade] DynamoDB write failed: %s",
+            "[log_order] DynamoDB write failed: %s",
             e,
         )
         return None
 
 
-def get_trade(
+def get_order_history(
     table_name: str,
     ticker: str,
 ):
     """Record executed trade entry with calculated quantity into DynamoDB."""
 
     logger.info(
-        "[get_trade] Retrieving trade, table: %s",
+        "[get_order_history] Retrieving trade, table: %s",
         table_name,
     )
 
@@ -329,7 +329,7 @@ def get_trade(
         return response.get("Items")
     except Exception as e:
         logger.error(
-            "[get_trade] DynamoDB read failed: %s",
+            "[get_order_history] DynamoDB read failed: %s",
             e,
         )
         return None
@@ -430,12 +430,15 @@ def dca():
     logger.info("Trading212 DCA Execution")
     logger.info("=" * 60)
 
+    interval_days = 3
+    dca_multiple = 0
+
     settings = Settings(
         api_domain=T212_URL,
         api_enpoint="equity/orders/market",
         api_secret_id=T212_SECRET_NAME,
         ticker="VWRPl_EQ",
-        equtity=10,
+        equity=10,
         max_drawdown_threshold=-1.0,
         min_drawdown_threshold=-2.5,
         database=GLUE_DATABASE,
@@ -443,8 +446,8 @@ def dca():
         log_table=LOG_TABLE,
         notification_email=NOTIFICATION_EMAIL,
     )
-    # 1. Credentials
 
+    # 1. Credentials
     api_secret: APISecret = get_secret(settings.api_secret_id)
 
     if not api_secret.api_token or not api_secret.secret_token:
@@ -454,15 +457,17 @@ def dca():
         }
 
     # Check if asset has ben purchased in the last 7days
-    trade = get_trade(settings.log_table, settings.ticker)
+    trade = get_order_history(settings.log_table, settings.ticker)
     trade_df = pd.DataFrame(trade)
     now = datetime.now(timezone.utc)
 
-    interval_days = 2
     time_diff = timedelta(days=0)
     if len(trade_df) >= 1:
         last_trade_day = (
-            trade_df.groupby(["asset", "vendor"]).created_datetime.max().values[0]
+            # Todo - Make it work for multiple vendors and assets
+            trade_df.groupby(["asset", "vendor"])
+            .created_datetime.max()
+            .values[0]
         )
         time_diff = now - last_trade_day
 
@@ -493,48 +498,45 @@ def dca():
     current_price = metrics.get("current_price")
 
     # 3. DCA Rule Checks
-    if not (
+    if (
         settings.min_drawdown_threshold <= change_pct <= settings.max_drawdown_threshold
-    ):
+    ) and (current_value >= avg_value_7d):
         logger.info(
-            "Drawdown %.2f%% outside [%.2f%%, %.2f%%]. Skipping buy.",
+            "Drawdown %.2f%% outside [%.2f%%, %.2f%%]. value (%.2f) >= 7d avg (%.2f)",
             change_pct,
             settings.min_drawdown_threshold,
             settings.max_drawdown_threshold,
-        )
-        return {
-            "statusCode": 200,
-            "body": "Drawdown condition not met",
-        }
-
-    if current_value >= avg_value_7d:
-        logger.info(
-            "Current value (%.2f) >= 7d avg (%.2f). Skipping buy.",
             current_value,
             avg_value_7d,
         )
-        return {
-            "statusCode": 200,
-            "body": "7d Average condition not met",
-        }
+        # Increase order amount by a 50%
+        dca_multiple = 0.5
 
     # 4. Prepare & Trigger Market Order
     # Calculate expected quantity: Quantity = Equity Amount / Current Price
+    equity = settings.equity
+    equity += equity * dca_multiple
+
     calculated_quantity = (
-        (settings.equity / current_price)
-        if (current_price and current_price > 0)
-        else 0.0
+        (equity / current_price) if (current_price and current_price > 0) else 0.0
     )
+
     logger.info(
         "Calculated quantity: %s",
         calculated_quantity,
     )
 
     payload = {
-        "ticker": settings.get("ticker"),
+        "ticker": settings.ticker,
         "quantity": round(calculated_quantity, 4),
         "extendedHours": False,
     }
+
+    if ENVIRONMENT == "LOCAL":
+        return {
+            "statusCode": 500,
+            "body": "Local run, skiping market order.",
+        }
 
     order_result = execute_market_order(
         settings.get("api_domain"),
@@ -551,10 +553,10 @@ def dca():
         }
 
     # 5. Log Trade
-    trade = log_trade(
+    trade = log_order(
         settings.get("log_table"),
         settings.get("ticker"),
-        settings.get("equity"),
+        settings.get("equtity"),
         calculated_quantity,
         order_result,
     )
