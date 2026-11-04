@@ -286,11 +286,11 @@ def log_order(
     )
 
     trade = {
-        "trade_id": str(uuid4()),
+        "id": str(uuid4()),
         "vendor": "trading-212",
-        "trader": "T212 DCA Automation",
+        "source": "T212 DCA Automation",
         "asset": ticker,
-        "value": value,
+        "value": (str(round(value, 6)) if value else ""),
         "quantity": (str(round(quantity, 6)) if quantity else ""),
         "additional_info": json.dumps(order_result),
         "created_datetime": datetime.now(timezone.utc).isoformat(),
@@ -545,15 +545,15 @@ def dca():
 
     payload = {
         "ticker": settings.ticker,
-        "quantity": round(calculated_quantity, 4),
+        "quantity": round(calculated_quantity, 6),
         "extendedHours": False,
     }
 
-    if ENVIRONMENT == "LOCAL":
-        return {
-            "statusCode": 500,
-            "body": "Local run, skiping market order.",
-        }
+    # if ENVIRONMENT == "LOCAL":
+    #     return {
+    #         "statusCode": 500,
+    #         "body": "Local run, skiping market order.",
+    #     }
 
     order_result = execute_market_order(
         settings.api_domain,
