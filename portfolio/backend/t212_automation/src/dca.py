@@ -49,7 +49,7 @@ logger.setLevel(LOG_LEVEL)
 
 class Settings(BaseSettings):
     api_domain: str
-    api_enpoint: str
+    api_endpoint: str
     api_secret_id: str
     ticker: str
     equity: float
@@ -418,6 +418,18 @@ Order response:
         return None
 
 
+def get_last_trade_date(trades):
+    if not trades:
+        return None
+
+    dates = [
+        datetime.fromisoformat(trade["created_datetime"].replace("Z", "+00:00"))
+        for trade in trades
+    ]
+
+    return max(dates)
+
+
 # ==========================================
 # # MAIN ORCHESTRATOR
 # ==========================================
@@ -430,12 +442,12 @@ def dca():
     logger.info("Trading212 DCA Execution")
     logger.info("=" * 60)
 
-    interval_days = 3
+    interval_days = 4
     dca_multiple = 0
 
     settings = Settings(
         api_domain=T212_URL,
-        api_enpoint="equity/orders/market",
+        api_endpoint="equity/orders/market",
         api_secret_id=T212_SECRET_NAME,
         ticker="VWRPl_EQ",
         equity=10,
@@ -461,26 +473,13 @@ def dca():
     trade_df = pd.DataFrame(trade)
     now = datetime.now(timezone.utc)
 
-    time_diff = timedelta(days=0)
-    if len(trade_df) >= 1:
-        last_trade_day = (
-            # Todo - Make it work for multiple vendors and assets
-            trade_df.groupby(["asset", "vendor"])
-            .created_datetime.max()
-            .values[0]
-        )
-        time_diff = now - last_trade_day
+    last_trade_date = get_last_trade_date(trade)
 
-    if time_diff < timedelta(days=interval_days) and len(trade_df) >= 1:
-        logger.info(
-            "Asset %s was purchased in the last %d days. Skipping buy.",
-            settings.ticker,
-            interval_days,
-        )
-        return {
-            "statusCode": 200,
-            "body": f"Asset was purchased in the last {interval_days} days. Skipping buy.",
-        }
+    if last_trade_date:
+        time_diff = now - last_trade_date
+
+        if time_diff < timedelta(days=interval_days):
+            return {"statusCode": 200, "body": "Purchase interval has not elapsed."}
 
     # 2. Athena Position Data
     metrics = get_latest_position(
@@ -498,9 +497,20 @@ def dca():
     current_price = metrics.get("current_price")
 
     # 3. DCA Rule Checks
-    if (
+    is_in_drawdown = (
         settings.min_drawdown_threshold <= change_pct <= settings.max_drawdown_threshold
-    ) and (current_value >= avg_value_7d):
+    )
+
+    is_below_moving_average = (
+        # Todo: Update to use price
+        current_value
+        <= avg_value_7d
+    )
+
+    if is_in_drawdown and is_below_moving_average:
+        # Increase order amount by a 50%
+        dca_multiple = 0.5
+
         logger.info(
             "Drawdown %.2f%% outside [%.2f%%, %.2f%%]. value (%.2f) >= 7d avg (%.2f)",
             change_pct,
@@ -509,8 +519,6 @@ def dca():
             current_value,
             avg_value_7d,
         )
-        # Increase order amount by a 50%
-        dca_multiple = 0.5
 
     # 4. Prepare & Trigger Market Order
     # Calculate expected quantity: Quantity = Equity Amount / Current Price
@@ -520,6 +528,15 @@ def dca():
     calculated_quantity = (
         (equity / current_price) if (current_price and current_price > 0) else 0.0
     )
+
+    if current_price is None or current_price <= 0:
+        logger.error("Invalid current price. Aborting execution.")
+        return {"statusCode": 500, "body": "Invalid market price."}
+
+    calculated_quantity = round(equity / current_price, 4)
+
+    if calculated_quantity <= 0:
+        raise ValueError("Calculated order quantity must be positive.")
 
     logger.info(
         "Calculated quantity: %s",
@@ -539,10 +556,10 @@ def dca():
         }
 
     order_result = execute_market_order(
-        settings.get("api_domain"),
-        settings.get("api_endpoint"),
-        api_token=api_secret.get("api_token"),
-        secret_token=api_secret.get("secret_token"),
+        settings.api_domain,
+        settings.api_endpoint,
+        api_token=api_secret.api_token,
+        secret_token=api_secret.secret_token,
         payload=payload,
     )
 
@@ -554,9 +571,9 @@ def dca():
 
     # 5. Log Trade
     trade = log_order(
-        settings.get("log_table"),
-        settings.get("ticker"),
-        settings.get("equtity"),
+        settings.log_table,
+        settings.ticker,
+        equity,
         calculated_quantity,
         order_result,
     )
@@ -566,9 +583,9 @@ def dca():
 
     # 6. Send notification
     notification = send_notification(
-        recipient=settings.get("notification_email"),
-        ticker=settings.get("ticker"),
-        equity=settings.get("equity"),
+        recipient_email=settings.notification_email,
+        ticker=settings.ticker,
+        equity=equity,
         quantity=calculated_quantity,
         change_pct=change_pct,
         current_price=current_price,
@@ -600,7 +617,7 @@ if __name__ == "__main__":
 
     # settings = Settings(
     #     api_domain=T212_URL,
-    #     api_enpoint="equity/orders/market",
+    #     api_endpoint="equity/orders/market",
     #     api_secret_id=T212_SECRET_NAME,
     #     ticker="VWRPl_EQ",
     #     equtity=5,
