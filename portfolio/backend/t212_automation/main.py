@@ -6,8 +6,11 @@ from src.dca import dca
 
 
 def lambda_handler(event, context):
-    return dca()
-
+    try:
+        res = dca()
+    except Exception as e:
+        raise e
+    return res
 
 if __name__ == "__main__":
     print("Starting local execution...")
