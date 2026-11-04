@@ -176,7 +176,7 @@ aws s3api put-public-access-block \
 - Add a lock to dca script. Check that asset hasn't been purchased within a suitable time interval.
 - Orchestrate workflow using `Aws Step Function`
 
-## Python dependency management
+### Incident 2 - Python dependency management
 
 ![alt text](./docs/img/image.png)
 
@@ -187,6 +187,32 @@ aws s3api put-public-access-block \
   "requestId": "",
   "stackTrace": []
 }
+```
+
+### Incident 3 - Dynamodb Error - Float types are not supported. Use Decimal types instead
+
+#### Error
+
+```txt
+[log_order] Loggin Trade, table: portfolio-dev-trade-log
+[ERROR] 2026-11-04T22:50:25.040Z b28242ae-d315-4c9c-8158-b21b4ba1024e [log_order] DynamoDB write failed: Float types are not supported. Use Decimal types instead.
+[WARNING] 2026-11-04T22:50:25.040Z b28242ae-d315-4c9c-8158-b21b4ba1024e Order was placed, but failed to log trade to DynamoDB.
+[INFO] 2026-11-04T22:50:25.040Z b28242ae-d315-4c9c-8158-b21b4ba1024e [send_notification] Sending trade notification to: akinkunmimustapha1@gmail.com
+[INFO] 2026-11-04T22:50:25.247Z b28242ae-d315-4c9c-8158-b21b4ba1024e [send_notification] Notification sent successfully. SES MessageId: 010201a1a8c1a3fd-9d099444-860a-4e06-ad12-8f195a124752-000000
+[INFO] 2026-11-04T22:50:25.249Z b28242ae-d315-4c9c-8158-b21b4ba1024e
+[INFO] 2026-11-04T22:50:25.249Z b28242ae-d315-4c9c-8158-b21b4ba1024e ------------------------------------------------------------
+```
+
+### Fix
+
+Round value to 6 decimal places before writing to dynamo db
+
+```python
+
+...
+
+        "value": (str(round(value, 6)) if value else ""),
+
 ```
 
 ## Format md File
